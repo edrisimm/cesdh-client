@@ -1,0 +1,96 @@
+{
+  "experiment_id": "EXP-2030-CH-SOLAR-001",
+  "created_utc": "2026-09-04T12:27:10.219212+00:00",
+  "researcher": "researcher-b",
+  "repository": "multi-researcher-demo",
+  "branch": "experiment-ch-res-expansion-2030",
+  "base_dataset_commit": "075dc8b6554621b185190bdaae93a48bca75fdbc3c799478173bfc239bf5a2f1",
+  "base_dataset_tag": "v1-0-0-raw-data",
+  "curated_by": "researcher-a",
+  "input_datasets": [
+    {
+      "filename": "CH_solar_irradiation_2024.csv",
+      "dataset_id": "dataset_0eb71ef2ba3a",
+      "sha256": "f48054a10b6b6f2a58a63609a3cfb94c64742d6efb4cf1db374383fc2a2f47f8",
+      "rows": 8784,
+      "carrier": "solar",
+      "units": "W/m2",
+      "provenance": "pvgis:JRC/seriescalc lat=46.95 lon=7.45 (PVGIS-SARAH2, 2020)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_0eb71ef2ba3a"
+    },
+    {
+      "filename": "DE_wind_onshore_generation_2024.csv",
+      "dataset_id": "dataset_8238b6b82faa",
+      "sha256": "df066718fff96344c93476dfc2516f6f300a6e03cbc3dda95aa80c6a1d52dd09",
+      "rows": 597,
+      "carrier": "wind",
+      "units": "MW",
+      "provenance": "opsd:time_series/2020-10-06/time_series_60min_singleindex.csv (byte-capped stream)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_8238b6b82faa"
+    },
+    {
+      "filename": "CH_household_demand_profiles.csv",
+      "dataset_id": "dataset_0556db4c69a3",
+      "sha256": "e644e95edaa4eae0c2acec0576bb62d94c8e20ea658aa5e660290c5de3e87630",
+      "rows": 8760,
+      "carrier": "electricity",
+      "units": "kW",
+      "provenance": "synthetic-fallback (dataverse: no usable Dataverse load-profile CSV)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_0556db4c69a3"
+    }
+  ],
+  "cesdm_blueprint": {
+    "filename": "sub_CH_RES_expansion_2030.yaml",
+    "sha256": "d81fc3a0737c43d2bbd513ba04af1ffde7d16256d8d64a23df16780c8fa12d13",
+    "delta_counts": {
+      "added_components": 3,
+      "modified_components": 1,
+      "deleted_components": 0
+    }
+  },
+  "scenario_edits": {
+    "added": [
+      {
+        "entity": "pv.ch.expansion_2030",
+        "class": "SolarGenerationUnit",
+        "nominal_power_capacity_mw": 5000.0
+      }
+    ],
+    "modified": [
+      {
+        "entity": "pf.ntc.ch.de",
+        "attribute": "maximum_power_flow_1_to_2",
+        "from": 6000.0,
+        "to": 8000.0
+      }
+    ],
+    "profiles_bound": [
+      {
+        "profile_id": "profile.esdh.dataset_0eb71ef2ba3a",
+        "dataset_id": "dataset_0eb71ef2ba3a",
+        "sha256": "f48054a10b6b6f2a58a63609a3cfb94c64742d6efb4cf1db374383fc2a2f47f8"
+      },
+      {
+        "profile_id": "profile.esdh.dataset_8238b6b82faa",
+        "dataset_id": "dataset_8238b6b82faa",
+        "sha256": "df066718fff96344c93476dfc2516f6f300a6e03cbc3dda95aa80c6a1d52dd09"
+      },
+      {
+        "profile_id": "profile.esdh.dataset_0556db4c69a3",
+        "dataset_id": "dataset_0556db4c69a3",
+        "sha256": "e644e95edaa4eae0c2acec0576bb62d94c8e20ea658aa5e660290c5de3e87630"
+      }
+    ]
+  },
+  "solver": {
+    "version": "pypsa-v0.26.0",
+    "executed": false,
+    "note": "mock run - metrics are illustrative, not solver output"
+  },
+  "output_summary": {
+    "total_cost_eur": 1230000000.0,
+    "co2_emissions_mton": 12.4,
+    "curtailment_rate": 0.024,
+    "solver_wall_time_s": 0.0
+  }
+}

@@ -1,0 +1,67 @@
+scenario_metadata:
+  scenario_id: sub_CH_RES_expansion_2030
+  scenario_name: CH renewable expansion 2030
+  reference_scenario_id: baseline_ch_neighbours
+  baseline_scenario_id: baseline_ch_neighbours
+  author: researcher-b
+  created_at: '2026-09-04T14:27:19.121549'
+  version: '1.0'
+  description: +5,000 MW CH solar PV, uprated CH interconnector
+  main_assumptions: ''
+  scenario_code: ''
+  target_year: 2030
+  geographic_region: Switzerland
+  temporal_resolution: Hourly (8760 h/year)
+scenario_content:
+  added_components:
+    Solar.DispatchView:
+      solar_dispatch_view.pv.ch.expansion_2030:
+        attributes:
+        - id: nominal_power_capacity
+          value: 5000.0
+          unit: MW
+        relations:
+        - id: representsAsset
+          target_entity_ids:
+          - pv.ch.expansion_2030
+    SolarGenerationUnit:
+      pv.ch.expansion_2030:
+        attributes:
+        - id: name
+          value: CH solar PV expansion 2030
+        relations: []
+    Profile:
+      profile.esdh.dataset_8238b6b82faa:
+        attributes:
+        - id: name
+          value: DE_wind_onshore_generation_2024.csv
+        - id: profile_unit
+          value: MW
+        - id: data_reference
+          value: esdh://multi-researcher-demo/dataset_8238b6b82faa
+        relations: []
+      profile.esdh.dataset_0556db4c69a3:
+        attributes:
+        - id: name
+          value: CH_household_demand_profiles.csv
+        - id: profile_unit
+          value: kW
+        - id: data_reference
+          value: esdh://multi-researcher-demo/dataset_0556db4c69a3
+        relations: []
+      profile.esdh.dataset_0eb71ef2ba3a:
+        attributes:
+        - id: name
+          value: CH_solar_irradiation_2024.csv
+        - id: profile_unit
+          value: W/m2
+        - id: data_reference
+          value: esdh://multi-researcher-demo/dataset_0eb71ef2ba3a
+        relations: []
+  modified_components:
+    Interconnector.PowerFlowView:
+      pf.ntc.ch.de:
+        attributes:
+          maximum_power_flow_1_to_2:
+            value: 8000.0
+            unit: MW

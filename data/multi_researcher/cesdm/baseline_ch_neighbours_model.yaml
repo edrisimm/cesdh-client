@@ -1,0 +1,2817 @@
+DemandUnit:
+  dem.ch:
+    attributes:
+    - id: name
+      value: CH electricity load
+    relations: []
+  dem.de:
+    attributes:
+    - id: name
+      value: DE electricity load
+    relations: []
+  dem.fr:
+    attributes:
+    - id: name
+      value: FR electricity load
+    relations: []
+  dem.it:
+    attributes:
+    - id: name
+      value: IT electricity load
+    relations: []
+  dem.at:
+    attributes:
+    - id: name
+      value: AT electricity load
+    relations: []
+GeneratorType:
+  Generation.Nuclear.LWR:
+    attributes:
+    - id: name
+      value: Generation.Nuclear.LWR
+    - id: energy_conversion_efficiency
+      value: 0.33
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 9.0
+      unit: MU/MWh
+    - id: maximum_ramp_rate_up
+      value: 0.05
+      unit: '%/h'
+    - id: maximum_ramp_rate_down
+      value: 0.05
+      unit: '%/h'
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.nuclear.uranium
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Nuclear.SMR:
+    attributes:
+    - id: name
+      value: Generation.Nuclear.SMR
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 9.0
+      unit: MU/MWh
+    - id: maximum_ramp_rate_up
+      value: 0.1
+      unit: '%/h'
+    - id: maximum_ramp_rate_down
+      value: 0.1
+      unit: '%/h'
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.nuclear.uranium
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Nuclear.Standard:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Nuclear.Standard
+    - id: energy_conversion_efficiency
+      value: 0.33
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 9.0
+      unit: MU/MWh
+    - id: maximum_ramp_rate_up
+      value: 0.33
+      unit: '%/h'
+    - id: maximum_ramp_rate_down
+      value: 0.33
+      unit: '%/h'
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.nuclear.uranium
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.HardCoal.Old1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.HardCoal.Old1
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.hard_coal
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.HardCoal.Old2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.HardCoal.Old2
+    - id: energy_conversion_efficiency
+      value: 0.4
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.hard_coal
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.HardCoal.New:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.HardCoal.New
+    - id: energy_conversion_efficiency
+      value: 0.46
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.hard_coal
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.HardCoal.CCS:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.HardCoal.CCS
+    - id: energy_conversion_efficiency
+      value: 0.38
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.hard_coal
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.HardCoal.Biofuel:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.HardCoal.Biofuel
+    - id: energy_conversion_efficiency
+      value: 0.38
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.hard_coal
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.Lignite.Old1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.Lignite.Old1
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.lignite
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.Lignite.Old2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.Lignite.Old2
+    - id: energy_conversion_efficiency
+      value: 0.4
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.lignite
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.Lignite.New:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.Lignite.New
+    - id: energy_conversion_efficiency
+      value: 0.46
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.lignite
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.Lignite.CCS:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.Lignite.CCS
+    - id: energy_conversion_efficiency
+      value: 0.38
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.lignite
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Coal.Lignite.Biofuel:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Coal.Lignite.Biofuel
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.coal.lignite
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.Conventional.Old1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.Conventional.Old1
+    - id: energy_conversion_efficiency
+      value: 0.36
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.1
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.Conventional.Old2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.Conventional.Old2
+    - id: energy_conversion_efficiency
+      value: 0.41
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.1
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.Old1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.Old1
+    - id: energy_conversion_efficiency
+      value: 0.4
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.Old2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.Old2
+    - id: energy_conversion_efficiency
+      value: 0.48
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.Present1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.Present1
+    - id: energy_conversion_efficiency
+      value: 0.56
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.Present2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.Present2
+    - id: energy_conversion_efficiency
+      value: 0.58
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.New:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.New
+    - id: energy_conversion_efficiency
+      value: 0.6
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.CCS:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.CCS
+    - id: energy_conversion_efficiency
+      value: 0.51
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.CCGT.Biofuel:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.CCGT.Biofuel
+    - id: energy_conversion_efficiency
+      value: 0.51
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.OCGT.Old:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.OCGT.Old
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Gas.OCGT.New:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Gas.OCGT.New
+    - id: energy_conversion_efficiency
+      value: 0.42
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.6
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Oil.LightOil.Standard:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Oil.LightOil.Standard
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 1.1
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Oil.HeavyOil.Old1:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Oil.HeavyOil.Old1
+    - id: energy_conversion_efficiency
+      value: 0.35
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Oil.HeavyOil.Old2:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Oil.HeavyOil.Old2
+    - id: energy_conversion_efficiency
+      value: 0.4
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.OilShale.Standard.Old:
+    attributes:
+    - id: name
+      value: Generation.Thermal.OilShale.Standard.Old
+    - id: energy_conversion_efficiency
+      value: 0.29
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil.shale
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.OilShale.Standard.New:
+    attributes:
+    - id: name
+      value: Generation.Thermal.OilShale.Standard.New
+    - id: energy_conversion_efficiency
+      value: 0.39
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 3.3
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil.shale
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.OilShale.Biofuel.Standard:
+    attributes:
+    - id: name
+      value: Generation.Thermal.OilShale.Biofuel.Standard
+    - id: energy_conversion_efficiency
+      value: 0.29
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.oil.shale
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Other.NonRenewable.Residual:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Other.NonRenewable.Residual
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Wind.Offshore:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Wind.Offshore
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.wind
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Wind.Onshore:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Wind.Onshore
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.wind
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Solar.PV:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Solar.PV
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Solar.PV.Rooftop:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Solar.PV.Rooftop
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Solar.PV.Utility:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Solar.PV.Utility
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Solar.Thermal:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Solar.Thermal
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Hydro.PHS.ClosedLoop:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Hydro.PHS.ClosedLoop
+    - id: energy_conversion_efficiency
+      value: 0.87
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Hydro.PHS.OpenLoop:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Hydro.PHS.OpenLoop
+    - id: energy_conversion_efficiency
+      value: 0.87
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Hydro.RunOfRiver:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Hydro.RunOfRiver
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: nondispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Other.Residual:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Other.Residual
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Hydrogen.FuelCell:
+    attributes:
+    - id: name
+      value: Generation.Hydrogen.FuelCell
+    - id: energy_conversion_efficiency
+      value: 0.55
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.hydrogen
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Thermal.Hydrogen.CCGT:
+    attributes:
+    - id: name
+      value: Generation.Thermal.Hydrogen.CCGT
+    - id: energy_conversion_efficiency
+      value: 0.58
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.hydrogen
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.DemandResponse:
+    attributes:
+    - id: name
+      value: Generation.DemandResponse
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 200.0
+      unit: MU/MWh
+    relations:
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Adequacy:
+    attributes:
+    - id: name
+      value: Generation.Adequacy
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 250.0
+      unit: MU/MWh
+    relations:
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Supply.Gas:
+    attributes:
+    - id: name
+      value: Supply.Gas
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Generation.Renewable.Hydro.Reservoir:
+    attributes:
+    - id: name
+      value: Generation.Renewable.Hydro.Reservoir
+    - id: energy_conversion_efficiency
+      value: 1.0
+      unit: Fraction 0-1
+    - id: dispatch_type
+      value: dispatchable
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    relations:
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+HydroGenerationUnit:
+  gen.ch.hydro.ror:
+    attributes:
+    - id: name
+      value: CH Hydro run-of-river
+    - id: turbine_type
+      value: kaplan
+    - id: is_reversible
+      value: false
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.RunOfRiver
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.at.hydro.ror:
+    attributes:
+    - id: name
+      value: AT Hydro run-of-river
+    - id: turbine_type
+      value: kaplan
+    - id: is_reversible
+      value: false
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.RunOfRiver
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.ch.hydro.reservoir:
+    attributes:
+    - id: name
+      value: CH Reservoir hydro turbines
+    - id: turbine_type
+      value: pelton
+    - id: is_reversible
+      value: false
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.Reservoir
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+    - id: drawsFromReservoir
+      target_entity_ids:
+      - storage.ch.hydro.reservoir
+  gen.at.hydro.reservoir:
+    attributes:
+    - id: name
+      value: AT Reservoir hydro turbines
+    - id: turbine_type
+      value: francis
+    - id: is_reversible
+      value: false
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.Reservoir
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+    - id: drawsFromReservoir
+      target_entity_ids:
+      - storage.at.hydro.reservoir
+  gen.ch.phs.open:
+    attributes:
+    - id: name
+      value: CH open-loop PHS pump-turbine
+    - id: turbine_type
+      value: reversible_francis
+    - id: is_reversible
+      value: true
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.PHS.OpenLoop
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+    - id: drawsFromReservoir
+      target_entity_ids:
+      - storage.ch.phs.open.upper
+  gen.at.phs.open:
+    attributes:
+    - id: name
+      value: AT open-loop PHS pump-turbine
+    - id: turbine_type
+      value: reversible_francis
+    - id: is_reversible
+      value: true
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.PHS.OpenLoop
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+    - id: drawsFromReservoir
+      target_entity_ids:
+      - storage.at.phs.open.upper
+  gen.ch.phs.closed:
+    attributes:
+    - id: name
+      value: CH closed-loop PHS pump-turbine
+    - id: turbine_type
+      value: reversible_francis
+    - id: is_reversible
+      value: true
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Hydro.PHS.ClosedLoop
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.water
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+    - id: drawsFromReservoir
+      target_entity_ids:
+      - storage.ch.phs.closed.upper
+    - id: dischargesToReservoir
+      target_entity_ids:
+      - storage.ch.phs.closed.lower
+Interconnector:
+  ntc.ch.de:
+    attributes:
+    - id: name
+      value: CH-DE NTC
+    relations: []
+  ntc.ch.fr:
+    attributes:
+    - id: name
+      value: CH-FR NTC
+    relations: []
+  ntc.ch.it:
+    attributes:
+    - id: name
+      value: CH-IT NTC
+    relations: []
+  ntc.ch.at:
+    attributes:
+    - id: name
+      value: CH-AT NTC
+    relations: []
+  ntc.de.fr:
+    attributes:
+    - id: name
+      value: DE-FR NTC
+    relations: []
+  ntc.de.at:
+    attributes:
+    - id: name
+      value: DE-AT NTC
+    relations: []
+  ntc.fr.it:
+    attributes:
+    - id: name
+      value: FR-IT NTC
+    relations: []
+  ntc.at.it:
+    attributes:
+    - id: name
+      value: AT-IT NTC
+    relations: []
+NuclearGenerationUnit:
+  gen.ch.nuc:
+    attributes:
+    - id: name
+      value: CH Nuclear
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Nuclear.Standard
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.nuclear.uranium
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.fr.nuc:
+    attributes:
+    - id: name
+      value: FR Nuclear
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Nuclear.Standard
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.nuclear.uranium
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+ReservoirStorageUnit:
+  storage.ch.hydro.reservoir:
+    attributes:
+    - id: name
+      value: CH Alpine seasonal reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.Reservoir
+    - id: suppliesResourceTo
+      target_entity_ids:
+      - gen.ch.hydro.reservoir
+  storage.at.hydro.reservoir:
+    attributes:
+    - id: name
+      value: AT Alpine reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.Reservoir
+    - id: suppliesResourceTo
+      target_entity_ids:
+      - gen.at.hydro.reservoir
+  storage.ch.phs.open.upper:
+    attributes:
+    - id: name
+      value: CH open-loop PHS upper reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.PumpedHydro.OpenLoop
+    - id: suppliesResourceTo
+      target_entity_ids:
+      - gen.ch.phs.open
+  storage.at.phs.open.upper:
+    attributes:
+    - id: name
+      value: AT open-loop PHS upper reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.PumpedHydro.OpenLoop
+    - id: suppliesResourceTo
+      target_entity_ids:
+      - gen.at.phs.open
+  storage.ch.phs.closed.upper:
+    attributes:
+    - id: name
+      value: CH closed-loop PHS upper reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.PumpedHydro.ClosedLoop
+    - id: suppliesResourceTo
+      target_entity_ids:
+      - gen.ch.phs.closed
+  storage.ch.phs.closed.lower:
+    attributes:
+    - id: name
+      value: CH closed-loop PHS lower reservoir
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+    - id: hasTechnology
+      target_entity_ids:
+      - Storage.Hydro.PumpedHydro.ClosedLoop
+SolarGenerationUnit:
+  gen.ch.sol:
+    attributes:
+    - id: name
+      value: CH Solar PV
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Solar.PV.Utility
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.de.sol:
+    attributes:
+    - id: name
+      value: DE Solar PV
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Solar.PV.Utility
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.it.sol:
+    attributes:
+    - id: name
+      value: IT Solar PV
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Solar.PV.Utility
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.solar
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+StorageType:
+  Storage.Electrochemical.Battery:
+    attributes:
+    - id: name
+      value: Storage.Electrochemical.Battery
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    - id: charging_efficiency
+      value: 0.9
+      unit: Fraction (0-1)
+    - id: discharging_efficiency
+      value: 0.95
+      unit: Fraction (0-1)
+    - id: has_natural_inflow
+      value: false
+    - id: has_active_charging
+      value: true
+    - id: storage_technology_type
+      value: battery
+    relations:
+    - id: hasCarrier
+      target_entity_ids:
+      - carrier.electricity
+  Storage.Hydro.PumpedHydro.ClosedLoop:
+    attributes:
+    - id: name
+      value: Storage.Hydro.PumpedHydro.ClosedLoop
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    - id: charging_efficiency
+      value: 0.82
+      unit: Fraction (0-1)
+    - id: discharging_efficiency
+      value: 0.87
+      unit: Fraction (0-1)
+    - id: has_natural_inflow
+      value: false
+    - id: has_active_charging
+      value: true
+    - id: storage_technology_type
+      value: PHS
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+  Storage.Hydro.PumpedHydro.OpenLoop:
+    attributes:
+    - id: name
+      value: Storage.Hydro.PumpedHydro.OpenLoop
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    - id: charging_efficiency
+      value: 0.82
+      unit: Fraction (0-1)
+    - id: discharging_efficiency
+      value: 0.87
+      unit: Fraction (0-1)
+    - id: has_natural_inflow
+      value: true
+    - id: has_active_charging
+      value: true
+    - id: storage_technology_type
+      value: PHS
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+  Storage.Hydro.Reservoir:
+    attributes:
+    - id: name
+      value: Storage.Hydro.Reservoir
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    - id: charging_efficiency
+      value: 0.0
+      unit: Fraction (0-1)
+    - id: discharging_efficiency
+      value: 1.0
+      unit: Fraction (0-1)
+    - id: has_natural_inflow
+      value: true
+    - id: has_active_charging
+      value: false
+    - id: storage_technology_type
+      value: hydro
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+  Storage.Hydro.Pondage:
+    attributes:
+    - id: name
+      value: Storage.Hydro.Pondage
+    - id: variable_operating_cost
+      value: 0.0
+      unit: MU/MWh
+    - id: charging_efficiency
+      value: 0.0
+      unit: Fraction (0-1)
+    - id: discharging_efficiency
+      value: 1.0
+      unit: Fraction (0-1)
+    - id: has_natural_inflow
+      value: true
+    - id: has_active_charging
+      value: false
+    - id: storage_technology_type
+      value: hydro
+    relations:
+    - id: storesResource
+      target_entity_ids:
+      - resource.water
+ThermalGenerationUnit:
+  gen.ch.gas:
+    attributes:
+    - id: name
+      value: CH Gas CCGT
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Gas.CCGT.New
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.de.gas:
+    attributes:
+    - id: name
+      value: DE Gas CCGT
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Gas.CCGT.New
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.fr.gas:
+    attributes:
+    - id: name
+      value: FR Gas CCGT
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Gas.CCGT.New
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.it.gas:
+    attributes:
+    - id: name
+      value: IT Gas CCGT
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Thermal.Gas.CCGT.New
+    - id: hasInputCarrier
+      target_entity_ids:
+      - carrier.fuel.fossil.gas.natural_gas
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+WindGenerationUnit:
+  gen.ch.win:
+    attributes:
+    - id: name
+      value: CH Wind
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Wind.Onshore
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.wind
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+  gen.de.win:
+    attributes:
+    - id: name
+      value: DE Wind
+    relations:
+    - id: hasTechnology
+      target_entity_ids:
+      - Generation.Renewable.Wind.Onshore
+    - id: hasInputResource
+      target_entity_ids:
+      - resource.renewable.wind
+    - id: hasOutputCarrier
+      target_entity_ids:
+      - carrier.electricity
+CarrierDomain:
+  domain.electricity:
+    attributes:
+    - id: name
+      value: Electricity domain
+    relations:
+    - id: hasCarrier
+      target_entity_ids:
+      - carrier.electricity
+ElectricalBus:
+  bus.ch:
+    attributes:
+    - id: name
+      value: Switzerland 380kV
+    - id: nominal_voltage
+      value: 380.0
+      unit: kV
+    relations:
+    - id: locatedIn
+      target_entity_ids:
+      - region.ch
+    - id: belongsToCarrierDomain
+      target_entity_ids:
+      - domain.electricity
+  bus.de:
+    attributes:
+    - id: name
+      value: Germany 380kV
+    - id: nominal_voltage
+      value: 380.0
+      unit: kV
+    relations:
+    - id: locatedIn
+      target_entity_ids:
+      - region.de
+    - id: belongsToCarrierDomain
+      target_entity_ids:
+      - domain.electricity
+  bus.fr:
+    attributes:
+    - id: name
+      value: France 400kV
+    - id: nominal_voltage
+      value: 400.0
+      unit: kV
+    relations:
+    - id: locatedIn
+      target_entity_ids:
+      - region.fr
+    - id: belongsToCarrierDomain
+      target_entity_ids:
+      - domain.electricity
+  bus.it:
+    attributes:
+    - id: name
+      value: Italy 380kV
+    - id: nominal_voltage
+      value: 380.0
+      unit: kV
+    relations:
+    - id: locatedIn
+      target_entity_ids:
+      - region.it
+    - id: belongsToCarrierDomain
+      target_entity_ids:
+      - domain.electricity
+  bus.at:
+    attributes:
+    - id: name
+      value: Austria 380kV
+    - id: nominal_voltage
+      value: 380.0
+      unit: kV
+    relations:
+    - id: locatedIn
+      target_entity_ids:
+      - region.at
+    - id: belongsToCarrierDomain
+      target_entity_ids:
+      - domain.electricity
+EnergyCarrier:
+  carrier.electricity:
+    attributes:
+    - id: name
+      value: Electricity
+    - id: co2_emission_intensity
+      value: 0.0
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.fossil.gas.natural_gas:
+    attributes:
+    - id: name
+      value: Natural Gas
+    - id: co2_emission_intensity
+      value: 0.2052
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 30.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.fossil.coal.hard_coal:
+    attributes:
+    - id: name
+      value: Hard Coal
+    - id: co2_emission_intensity
+      value: 0.3384
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 12.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.fossil.coal.lignite:
+    attributes:
+    - id: name
+      value: Lignite
+    - id: co2_emission_intensity
+      value: 0.3636
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.fossil.oil:
+    attributes:
+    - id: name
+      value: Oil
+    - id: co2_emission_intensity
+      value: 0.2808
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.fossil.oil.shale:
+    attributes:
+    - id: name
+      value: Oil Shale
+    - id: co2_emission_intensity
+      value: 0.36
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.biofuel.biomass:
+    attributes:
+    - id: name
+      value: Biomass
+    - id: co2_emission_intensity
+      value: 0.0
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.hydrogen:
+    attributes:
+    - id: name
+      value: Hydrogen
+    - id: co2_emission_intensity
+      value: 0.0
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 0.0
+      unit: MU/MWh
+    relations: []
+  carrier.fuel.nuclear.uranium:
+    attributes:
+    - id: name
+      value: Uranium
+    - id: co2_emission_intensity
+      value: 0.0
+      unit: tCO2/MWh
+    - id: energy_carrier_cost
+      value: 3.0
+      unit: MU/MWh
+    relations: []
+EnergySystemModel:
+  CH_NEIGHBOURS_2030:
+    attributes:
+    - id: long_name
+      value: CH + Neighbours electricity model 2030
+    - id: co2_price
+      value: 80.0
+      unit: MU/tCO2
+    relations: []
+GeographicalRegion:
+  region.ch:
+    attributes:
+    - id: name
+      value: Switzerland
+    relations: []
+  region.de:
+    attributes:
+    - id: name
+      value: Germany
+    relations: []
+  region.fr:
+    attributes:
+    - id: name
+      value: France
+    relations: []
+  region.it:
+    attributes:
+    - id: name
+      value: Italy
+    relations: []
+  region.at:
+    attributes:
+    - id: name
+      value: Austria
+    relations: []
+NaturalResource:
+  resource.renewable.solar:
+    attributes:
+    - id: name
+      value: Solar
+    - id: resource_group
+      value: renewable
+    - id: resource_type
+      value: solar_irradiance
+    relations: []
+  resource.renewable.wind:
+    attributes:
+    - id: name
+      value: Wind
+    - id: resource_group
+      value: renewable
+    - id: resource_type
+      value: wind
+    relations: []
+  resource.water:
+    attributes:
+    - id: name
+      value: Water
+    - id: resource_group
+      value: hydro
+    - id: resource_type
+      value: water_inflow
+    relations: []
+Profile:
+  profile.gen.ch.win.capacity_factor:
+    attributes:
+    - id: name
+      value: CH Wind capacity factor
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.ch.win.capacity_factor/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.ch.sol.capacity_factor:
+    attributes:
+    - id: name
+      value: CH Solar PV capacity factor
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.ch.sol.capacity_factor/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.de.win.capacity_factor:
+    attributes:
+    - id: name
+      value: DE Wind capacity factor
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.de.win.capacity_factor/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.de.sol.capacity_factor:
+    attributes:
+    - id: name
+      value: DE Solar PV capacity factor
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.de.sol.capacity_factor/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.it.sol.capacity_factor:
+    attributes:
+    - id: name
+      value: IT Solar PV capacity factor
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.it.sol.capacity_factor/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.ch.hydro.ror.run_of_river_inflow:
+    attributes:
+    - id: name
+      value: CH Hydro run-of-river run-of-river inflow
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.ch.hydro.ror.run_of_river_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.gen.at.hydro.ror.run_of_river_inflow:
+    attributes:
+    - id: name
+      value: AT Hydro run-of-river run-of-river inflow
+    - id: profile_type
+      value: as_capacity_factor
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.gen.at.hydro.ror.run_of_river_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.storage.ch.hydro.reservoir.natural_inflow:
+    attributes:
+    - id: name
+      value: CH Alpine seasonal reservoir natural inflow
+    - id: profile_type
+      value: as_normalized_annual_energy
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.storage.ch.hydro.reservoir.natural_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.storage.at.hydro.reservoir.natural_inflow:
+    attributes:
+    - id: name
+      value: AT Alpine reservoir natural inflow
+    - id: profile_type
+      value: as_normalized_annual_energy
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.storage.at.hydro.reservoir.natural_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.storage.ch.phs.open.upper.natural_inflow:
+    attributes:
+    - id: name
+      value: CH open-loop PHS upper reservoir natural inflow
+    - id: profile_type
+      value: as_normalized_annual_energy
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.storage.ch.phs.open.upper.natural_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+  profile.storage.at.phs.open.upper.natural_inflow:
+    attributes:
+    - id: name
+      value: AT open-loop PHS upper reservoir natural inflow
+    - id: profile_type
+      value: as_normalized_annual_energy
+    - id: profile_unit
+      value: p.u.
+    - id: data_reference
+      value: profiles.h5:/profiles/profile.storage.at.phs.open.upper.natural_inflow/values
+    relations:
+    - id: hasTimestampSeries
+      target_entity_ids:
+      - ts.hourly.2030
+Demand.DispatchView:
+  dispatch.dem.ch:
+    attributes:
+    - id: annual_energy_demand
+      value: 60000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.ch
+  dispatch.dem.de:
+    attributes:
+    - id: annual_energy_demand
+      value: 500000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.de
+  dispatch.dem.fr:
+    attributes:
+    - id: annual_energy_demand
+      value: 450000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.fr
+  dispatch.dem.it:
+    attributes:
+    - id: annual_energy_demand
+      value: 300000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.it
+  dispatch.dem.at:
+    attributes:
+    - id: annual_energy_demand
+      value: 70000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.at
+HydroGenerationUnit.DispatchView:
+  dispatch.gen.ch.hydro.ror:
+    attributes:
+    - id: nominal_power_capacity
+      value: 4000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 16000000.0
+      unit: MWh/year
+    - id: machine_role
+      value: turbine
+    - id: turbine_efficiency
+      value: 0.92
+      unit: Fraction (0-1)
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.hydro.ror
+    - id: hasRunOfRiverInflowProfile
+      target_entity_ids:
+      - profile.gen.ch.hydro.ror.run_of_river_inflow
+  dispatch.gen.at.hydro.ror:
+    attributes:
+    - id: nominal_power_capacity
+      value: 1500.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 8000000.0
+      unit: MWh/year
+    - id: machine_role
+      value: turbine
+    - id: turbine_efficiency
+      value: 0.92
+      unit: Fraction (0-1)
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.hydro.ror
+    - id: hasRunOfRiverInflowProfile
+      target_entity_ids:
+      - profile.gen.at.hydro.ror.run_of_river_inflow
+  dispatch.gen.ch.hydro.reservoir:
+    attributes:
+    - id: nominal_power_capacity
+      value: 8000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 20000000.0
+      unit: MWh/year
+    - id: machine_role
+      value: turbine
+    - id: turbine_efficiency
+      value: 0.91
+      unit: Fraction (0-1)
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.hydro.reservoir
+  dispatch.gen.at.hydro.reservoir:
+    attributes:
+    - id: nominal_power_capacity
+      value: 3000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 7000000.0
+      unit: MWh/year
+    - id: machine_role
+      value: turbine
+    - id: turbine_efficiency
+      value: 0.9
+      unit: Fraction (0-1)
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.hydro.reservoir
+  dispatch.gen.ch.phs.open:
+    attributes:
+    - id: nominal_power_capacity
+      value: 1500.0
+      unit: MW
+    - id: machine_role
+      value: reversible
+    - id: turbine_efficiency
+      value: 0.9
+      unit: Fraction (0-1)
+    - id: maximum_pumping_power
+      value: 1300.0
+      unit: MW
+    - id: pumping_efficiency
+      value: 0.82
+      unit: pu
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.phs.open
+  dispatch.gen.at.phs.open:
+    attributes:
+    - id: nominal_power_capacity
+      value: 1500.0
+      unit: MW
+    - id: machine_role
+      value: reversible
+    - id: turbine_efficiency
+      value: 0.9
+      unit: Fraction (0-1)
+    - id: maximum_pumping_power
+      value: 1300.0
+      unit: MW
+    - id: pumping_efficiency
+      value: 0.82
+      unit: pu
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.phs.open
+  dispatch.gen.ch.phs.closed:
+    attributes:
+    - id: nominal_power_capacity
+      value: 2000.0
+      unit: MW
+    - id: machine_role
+      value: reversible
+    - id: turbine_efficiency
+      value: 0.89
+      unit: Fraction (0-1)
+    - id: maximum_pumping_power
+      value: 1900.0
+      unit: MW
+    - id: pumping_efficiency
+      value: 0.81
+      unit: pu
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.phs.closed
+ReservoirStorageUnit.DispatchView:
+  dispatch.storage.ch.hydro.reservoir:
+    attributes:
+    - id: energy_storage_capacity
+      value: 8800000.0
+      unit: MWh
+    - id: annual_natural_inflow_energy
+      value: 20000000.0
+      unit: MWh/year
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.55
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.hydro.reservoir
+    - id: hasNaturalInflowProfile
+      target_entity_ids:
+      - profile.storage.ch.hydro.reservoir.natural_inflow
+  dispatch.storage.at.hydro.reservoir:
+    attributes:
+    - id: energy_storage_capacity
+      value: 3000000.0
+      unit: MWh
+    - id: annual_natural_inflow_energy
+      value: 7000000.0
+      unit: MWh/year
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.5
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.at.hydro.reservoir
+    - id: hasNaturalInflowProfile
+      target_entity_ids:
+      - profile.storage.at.hydro.reservoir.natural_inflow
+  dispatch.storage.ch.phs.open.upper:
+    attributes:
+    - id: energy_storage_capacity
+      value: 1200000.0
+      unit: MWh
+    - id: annual_natural_inflow_energy
+      value: 1200000.0
+      unit: MWh/year
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.5
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.open.upper
+    - id: hasNaturalInflowProfile
+      target_entity_ids:
+      - profile.storage.ch.phs.open.upper.natural_inflow
+  dispatch.storage.at.phs.open.upper:
+    attributes:
+    - id: energy_storage_capacity
+      value: 450000.0
+      unit: MWh
+    - id: annual_natural_inflow_energy
+      value: 500000.0
+      unit: MWh/year
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.5
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.at.phs.open.upper
+    - id: hasNaturalInflowProfile
+      target_entity_ids:
+      - profile.storage.at.phs.open.upper.natural_inflow
+  dispatch.storage.ch.phs.closed.upper:
+    attributes:
+    - id: energy_storage_capacity
+      value: 250000.0
+      unit: MWh
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.5
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.closed.upper
+  dispatch.storage.ch.phs.closed.lower:
+    attributes:
+    - id: energy_storage_capacity
+      value: 250000.0
+      unit: MWh
+    - id: minimum_state_of_charge
+      value: 0.05
+      unit: Fraction
+    - id: maximum_state_of_charge
+      value: 1.0
+      unit: Fraction
+    - id: initial_state_of_charge
+      value: 0.5
+      unit: Fraction
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.closed.lower
+NuclearGenerationUnit.DispatchView:
+  dispatch.gen.ch.nuc:
+    attributes:
+    - id: nominal_power_capacity
+      value: 2000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.nuc
+  dispatch.gen.fr.nuc:
+    attributes:
+    - id: nominal_power_capacity
+      value: 56000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.fr.nuc
+Solar.DispatchView:
+  dispatch.gen.ch.sol:
+    attributes:
+    - id: nominal_power_capacity
+      value: 2000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 2000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.sol
+    - id: hasAvailabilityProfile
+      target_entity_ids:
+      - profile.gen.ch.sol.capacity_factor
+  dispatch.gen.de.sol:
+    attributes:
+    - id: nominal_power_capacity
+      value: 60000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 60000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.sol
+    - id: hasAvailabilityProfile
+      target_entity_ids:
+      - profile.gen.de.sol.capacity_factor
+  dispatch.gen.it.sol:
+    attributes:
+    - id: nominal_power_capacity
+      value: 20000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 25000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.it.sol
+    - id: hasAvailabilityProfile
+      target_entity_ids:
+      - profile.gen.it.sol.capacity_factor
+ThermalGenerationUnit.DispatchView:
+  dispatch.gen.ch.gas:
+    attributes:
+    - id: nominal_power_capacity
+      value: 3000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.gas
+  dispatch.gen.de.gas:
+    attributes:
+    - id: nominal_power_capacity
+      value: 6000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.gas
+  dispatch.gen.fr.gas:
+    attributes:
+    - id: nominal_power_capacity
+      value: 4000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.fr.gas
+  dispatch.gen.it.gas:
+    attributes:
+    - id: nominal_power_capacity
+      value: 5000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.it.gas
+Wind.DispatchView:
+  dispatch.gen.ch.win:
+    attributes:
+    - id: nominal_power_capacity
+      value: 500.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 900000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.win
+    - id: hasAvailabilityProfile
+      target_entity_ids:
+      - profile.gen.ch.win.capacity_factor
+  dispatch.gen.de.win:
+    attributes:
+    - id: nominal_power_capacity
+      value: 30000.0
+      unit: MW
+    - id: annual_resource_potential
+      value: 65000000.0
+      unit: MWh/year
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.win
+    - id: hasAvailabilityProfile
+      target_entity_ids:
+      - profile.gen.de.win.capacity_factor
+Interconnector.PowerFlowView:
+  pf.ntc.ch.de:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 6000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 5500.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.de
+  pf.ntc.ch.fr:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 4000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 3500.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.fr
+  pf.ntc.ch.it:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 5000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 4500.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.it
+  pf.ntc.ch.at:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 2000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 2000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.at
+  pf.ntc.de.fr:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 3500.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 3500.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.de.fr
+  pf.ntc.de.at:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 4000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 4000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.de.at
+  pf.ntc.fr.it:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 3000.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 3000.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.fr.it
+  pf.ntc.at.it:
+    attributes:
+    - id: maximum_power_flow_1_to_2
+      value: 2500.0
+      unit: MW
+    - id: maximum_power_flow_2_to_1
+      value: 2500.0
+      unit: MW
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.at.it
+BusLocationView:
+  location.bus.ch:
+    attributes:
+    - id: latitude
+      value: 47.0
+      unit: decimal degrees
+    - id: longitude
+      value: 8.0
+      unit: decimal degrees
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - bus.ch
+  location.bus.de:
+    attributes:
+    - id: latitude
+      value: 51.0
+      unit: decimal degrees
+    - id: longitude
+      value: 10.0
+      unit: decimal degrees
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - bus.de
+  location.bus.fr:
+    attributes:
+    - id: latitude
+      value: 46.0
+      unit: decimal degrees
+    - id: longitude
+      value: 2.0
+      unit: decimal degrees
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - bus.fr
+  location.bus.it:
+    attributes:
+    - id: latitude
+      value: 42.0
+      unit: decimal degrees
+    - id: longitude
+      value: 12.0
+      unit: decimal degrees
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - bus.it
+  location.bus.at:
+    attributes:
+    - id: latitude
+      value: 47.5
+      unit: decimal degrees
+    - id: longitude
+      value: 14.0
+      unit: decimal degrees
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - bus.at
+TwoPort.TopologyView:
+  topo.ntc.ch.de:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.de
+    - id: fromNode
+      target_entity_ids:
+      - bus.ch
+    - id: toNode
+      target_entity_ids:
+      - bus.de
+  topo.ntc.ch.fr:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.fr
+    - id: fromNode
+      target_entity_ids:
+      - bus.ch
+    - id: toNode
+      target_entity_ids:
+      - bus.fr
+  topo.ntc.ch.it:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.it
+    - id: fromNode
+      target_entity_ids:
+      - bus.ch
+    - id: toNode
+      target_entity_ids:
+      - bus.it
+  topo.ntc.ch.at:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.ch.at
+    - id: fromNode
+      target_entity_ids:
+      - bus.ch
+    - id: toNode
+      target_entity_ids:
+      - bus.at
+  topo.ntc.de.fr:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.de.fr
+    - id: fromNode
+      target_entity_ids:
+      - bus.de
+    - id: toNode
+      target_entity_ids:
+      - bus.fr
+  topo.ntc.de.at:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.de.at
+    - id: fromNode
+      target_entity_ids:
+      - bus.de
+    - id: toNode
+      target_entity_ids:
+      - bus.at
+  topo.ntc.fr.it:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.fr.it
+    - id: fromNode
+      target_entity_ids:
+      - bus.fr
+    - id: toNode
+      target_entity_ids:
+      - bus.it
+  topo.ntc.at.it:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - ntc.at.it
+    - id: fromNode
+      target_entity_ids:
+      - bus.at
+    - id: toNode
+      target_entity_ids:
+      - bus.it
+SinglePort.TopologyView:
+  topo.dem.ch:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.ch
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.dem.de:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.de
+    - id: atNode
+      target_entity_ids:
+      - bus.de
+  topo.dem.fr:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.fr
+    - id: atNode
+      target_entity_ids:
+      - bus.fr
+  topo.dem.it:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.it
+    - id: atNode
+      target_entity_ids:
+      - bus.it
+  topo.dem.at:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - dem.at
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.gen.ch.gas:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.gas
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.nuc:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.nuc
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.win:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.win
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.sol:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.sol
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.de.gas:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.gas
+    - id: atNode
+      target_entity_ids:
+      - bus.de
+  topo.gen.de.win:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.win
+    - id: atNode
+      target_entity_ids:
+      - bus.de
+  topo.gen.de.sol:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.de.sol
+    - id: atNode
+      target_entity_ids:
+      - bus.de
+  topo.gen.fr.nuc:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.fr.nuc
+    - id: atNode
+      target_entity_ids:
+      - bus.fr
+  topo.gen.fr.gas:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.fr.gas
+    - id: atNode
+      target_entity_ids:
+      - bus.fr
+  topo.gen.it.gas:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.it.gas
+    - id: atNode
+      target_entity_ids:
+      - bus.it
+  topo.gen.it.sol:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.it.sol
+    - id: atNode
+      target_entity_ids:
+      - bus.it
+  topo.gen.ch.hydro.ror:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.hydro.ror
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.at.hydro.ror:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.hydro.ror
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.storage.ch.hydro.reservoir:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.hydro.reservoir
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.hydro.reservoir:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.hydro.reservoir
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.storage.at.hydro.reservoir:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.at.hydro.reservoir
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.gen.at.hydro.reservoir:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.hydro.reservoir
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.storage.ch.phs.open.upper:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.open.upper
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.phs.open:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.phs.open
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.storage.at.phs.open.upper:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.at.phs.open.upper
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.gen.at.phs.open:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.at.phs.open
+    - id: atNode
+      target_entity_ids:
+      - bus.at
+  topo.storage.ch.phs.closed.upper:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.closed.upper
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.storage.ch.phs.closed.lower:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - storage.ch.phs.closed.lower
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+  topo.gen.ch.phs.closed:
+    attributes: []
+    relations:
+    - id: representsAsset
+      target_entity_ids:
+      - gen.ch.phs.closed
+    - id: atNode
+      target_entity_ids:
+      - bus.ch
+TimestampSeries:
+  ts.hourly.2030:
+    attributes:
+    - id: name
+      value: Hourly 2030
+    - id: start_datetime
+      value: '2030-01-01T00:00:00'
+    - id: resolution
+      value: PT1H
+    - id: length
+      value: 8760
+    - id: timezone
+      value: Europe/Zurich
+    relations: []

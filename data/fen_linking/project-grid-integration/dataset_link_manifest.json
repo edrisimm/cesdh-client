@@ -1,0 +1,81 @@
+{
+  "manifest_version": "1.0",
+  "consumer_repository": "project-grid-integration",
+  "linked_repository": "fen-general",
+  "generated_at": "2026-08-26T07:22:13+00:00",
+  "local_duplication": false,
+  "resolution": {
+    "scheme": "esdh://{repository}/{dataset_id}",
+    "gateway_endpoint": "GET /datasets/{dataset_id}/download",
+    "required_header": "X-CESDH-Repository: <repository from the URI>"
+  },
+  "links": [
+    {
+      "linked_repository": "fen-general",
+      "dataset_id": "esdh://fen-general/dataset_ea2f279f52e6",
+      "resolved_dataset_id": "dataset_ea2f279f52e6",
+      "file_name": "DE_wind_onshore_generation_2024.csv",
+      "lakefs_uri": "lakefs://fen-general/open-data-v1/raw/dataset_ea2f279f52e6/DE_wind_onshore_generation_2024.csv",
+      "branch": "open-data-v1",
+      "commit_hash": "3ac88179c4a59d2c751b0040a335f633530cf583f5ff176bfef245ee9fad70cb",
+      "content_sha256": "df066718fff96344c93476dfc2516f6f300a6e03cbc3dda95aa80c6a1d52dd09",
+      "source_size_bytes": 17113,
+      "carrier": "wind",
+      "unit": "MW",
+      "observed_period": "2015-01-01T00:00:00Z..2015-01-25T20:00:00Z",
+      "provenance": "opsd:time_series/2020-10-06/time_series_60min_singleindex.csv (byte-capped stream)",
+      "virtual_slice": {
+        "columns": [
+          "timestamp",
+          "wind_onshore_mw"
+        ],
+        "label": "full-period-wind"
+      },
+      "local_duplication": false
+    },
+    {
+      "linked_repository": "fen-general",
+      "dataset_id": "esdh://fen-general/dataset_90a93209e045",
+      "resolved_dataset_id": "dataset_90a93209e045",
+      "file_name": "CH_household_demand_profiles.csv",
+      "lakefs_uri": "lakefs://fen-general/open-data-v1/raw/dataset_90a93209e045/CH_household_demand_profiles.csv",
+      "branch": "open-data-v1",
+      "commit_hash": "412621e473bb70100eea3e9e975f6111df6677ba6d2656a55c4da46af5df9c82",
+      "content_sha256": "e644e95edaa4eae0c2acec0576bb62d94c8e20ea658aa5e660290c5de3e87630",
+      "source_size_bytes": 244586,
+      "carrier": "electricity",
+      "unit": "kW",
+      "observed_period": "2024-01-01T00:00:00Z..2024-12-30T23:00:00Z",
+      "provenance": "synthetic-fallback (dataverse: no usable Dataverse load-profile CSV)",
+      "virtual_slice": {
+        "columns": [
+          "timestamp",
+          "demand_kw"
+        ],
+        "label": "full-period-demand"
+      },
+      "local_duplication": false
+    }
+  ],
+  "composite_views": [
+    {
+      "name": "ch_de_residual_load",
+      "join_on": "hour_of_year",
+      "key_derivation": "hour_of_year = (dayofyear - 1) * 24 + hour, computed per member at resolution time. The members cover different calendar years, so they are aligned by position in the year (the standard weather-year alignment) rather than by absolute timestamp, which would intersect to nothing.",
+      "members": [
+        {
+          "dataset_id": "esdh://fen-general/dataset_ea2f279f52e6",
+          "as": "wind_mw",
+          "observed_period": "2015-01-01T00:00:00Z..2015-01-25T20:00:00Z"
+        },
+        {
+          "dataset_id": "esdh://fen-general/dataset_90a93209e045",
+          "as": "demand_kw",
+          "observed_period": "2024-01-01T00:00:00Z..2024-12-30T23:00:00Z"
+        }
+      ],
+      "description": "Inner join of German onshore wind actuals and Swiss household demand, used to derive a per-unit wind availability and a residual load series",
+      "materialised": false
+    }
+  ]
+}

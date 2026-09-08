@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cesdh"
+version = "0.1.0"
+description = "Frictionless data access client for the Energy Systems Data Hub"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas",
+    "h5py",
+    "requests",
+    # download_to_dataframe(file_type="yaml") imports yaml lazily (client.py).
+    # Without this a clean install fails at first use on any YAML dataset.
+    "pyyaml",
+]
+
+# Map the package name "cesdh" to this directory (src/sdk/) so that
+# `pip install -e ./src/sdk` makes `import cesdh` resolve here without
+# requiring any PYTHONPATH manipulation.
+[tool.setuptools]
+packages = ["cesdh"]
+
+[tool.setuptools.package-dir]
+"cesdh" = "."

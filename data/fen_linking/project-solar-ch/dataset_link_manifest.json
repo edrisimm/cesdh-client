@@ -1,0 +1,40 @@
+{
+  "manifest_version": "1.0",
+  "consumer_repository": "project-solar-ch",
+  "linked_repository": "fen-general",
+  "generated_at": "2026-08-26T07:22:13+00:00",
+  "local_duplication": false,
+  "resolution": {
+    "scheme": "esdh://{repository}/{dataset_id}",
+    "gateway_endpoint": "GET /datasets/{dataset_id}/download",
+    "required_header": "X-CESDH-Repository: <repository from the URI>"
+  },
+  "links": [
+    {
+      "linked_repository": "fen-general",
+      "dataset_id": "esdh://fen-general/dataset_57159b86b8c8",
+      "resolved_dataset_id": "dataset_57159b86b8c8",
+      "file_name": "CH_solar_irradiation_2024.csv",
+      "lakefs_uri": "lakefs://fen-general/open-data-v1/raw/dataset_57159b86b8c8/CH_solar_irradiation_2024.csv",
+      "branch": "open-data-v1",
+      "commit_hash": "e9cb394fd73901471ab25f9a59562d65e6d7eaf16b8e225f49a76bc36037e7b8",
+      "content_sha256": "2441a6ab4e7959f9f35a0e8460a3f09d38cc5985ff8dce94823a97bc9f952113",
+      "source_size_bytes": 243482,
+      "carrier": "solar",
+      "unit": "W/m2",
+      "observed_period": "2024-01-01T00:00:00Z..2024-12-30T23:00:00Z",
+      "provenance": "synthetic-fallback (pvgis: ('Connection aborted.', RemoteDisconnected('Remote en)",
+      "virtual_slice": {
+        "time_start": "2024-06-01T00:00:00Z",
+        "time_end": "2024-08-31T23:00:00Z",
+        "columns": [
+          "timestamp",
+          "ghi_w_per_m2"
+        ],
+        "label": "summer-2024-jja"
+      },
+      "local_duplication": false
+    }
+  ],
+  "composite_views": []
+}

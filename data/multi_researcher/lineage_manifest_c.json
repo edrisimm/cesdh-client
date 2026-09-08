@@ -1,0 +1,70 @@
+{
+  "experiment_id": "EXP-2030-CH-STORAGE-002",
+  "created_utc": "2026-09-04T12:27:20.340522+00:00",
+  "researcher": "researcher-c",
+  "repository": "multi-researcher-demo",
+  "branch": "reanalysis-c-storage-sensitivity",
+  "builds_on": {
+    "experiment_id": "EXP-2030-CH-SOLAR-001",
+    "researcher": "researcher-b",
+    "manifest_dataset_id": "dataset_db4859f4ff9f",
+    "blueprint_sha256": "d81fc3a0737c43d2bbd513ba04af1ffde7d16256d8d64a23df16780c8fa12d13"
+  },
+  "base_dataset_tag": "v1-0-0-raw-data",
+  "curated_by": "researcher-a",
+  "input_datasets": [
+    {
+      "filename": "CH_solar_irradiation_2024.csv",
+      "dataset_id": "dataset_0eb71ef2ba3a",
+      "sha256": "f48054a10b6b6f2a58a63609a3cfb94c64742d6efb4cf1db374383fc2a2f47f8",
+      "rows": 8784,
+      "carrier": "solar",
+      "units": "W/m2",
+      "provenance": "pvgis:JRC/seriescalc lat=46.95 lon=7.45 (PVGIS-SARAH2, 2020)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_0eb71ef2ba3a"
+    },
+    {
+      "filename": "DE_wind_onshore_generation_2024.csv",
+      "dataset_id": "dataset_8238b6b82faa",
+      "sha256": "df066718fff96344c93476dfc2516f6f300a6e03cbc3dda95aa80c6a1d52dd09",
+      "rows": 597,
+      "carrier": "wind",
+      "units": "MW",
+      "provenance": "opsd:time_series/2020-10-06/time_series_60min_singleindex.csv (byte-capped stream)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_8238b6b82faa"
+    },
+    {
+      "filename": "CH_household_demand_profiles.csv",
+      "dataset_id": "dataset_0556db4c69a3",
+      "sha256": "e644e95edaa4eae0c2acec0576bb62d94c8e20ea658aa5e660290c5de3e87630",
+      "rows": 8760,
+      "carrier": "electricity",
+      "units": "kW",
+      "provenance": "synthetic-fallback (dataverse: no usable Dataverse load-profile CSV)",
+      "esdh_uri": "esdh://multi-researcher-demo/dataset_0556db4c69a3"
+    }
+  ],
+  "inputs_reverified": 3,
+  "cesdm_blueprint": {
+    "filename": "sub_CH_storage_sensitivity_2030.yaml",
+    "sha256": "6528f3eda9836e6f01959c89aa80982a9a1ca0ee887bd35e1a80b6f522d79a62",
+    "reference_scenario_id": "sub_CH_RES_expansion_2030",
+    "chain_depth": 2,
+    "delta_counts": {
+      "added_components": 2,
+      "modified_components": 1,
+      "deleted_components": 2
+    }
+  },
+  "solver": {
+    "version": "pypsa-v0.26.0",
+    "executed": false,
+    "note": "mock run - metrics are illustrative"
+  },
+  "output_summary": {
+    "total_cost_eur": 1190000000.0,
+    "co2_emissions_mton": 11.6,
+    "curtailment_rate": 0.011
+  },
+  "chain_inflation_entities": 207
+}

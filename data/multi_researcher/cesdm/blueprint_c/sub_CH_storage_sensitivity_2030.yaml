@@ -1,0 +1,48 @@
+scenario_metadata:
+  scenario_id: sub_CH_storage_sensitivity_2030
+  scenario_name: CH storage sensitivity on top of RES expansion
+  reference_scenario_id: sub_CH_RES_expansion_2030
+  baseline_scenario_id: baseline_ch_neighbours
+  author: researcher-c
+  created_at: '2026-09-04T14:27:20.203263'
+  version: '1.0'
+  description: +4 GWh grid battery on top of B's +5 GW solar expansion
+  main_assumptions: ''
+  scenario_code: ''
+  target_year: 2030
+  geographic_region: Switzerland
+scenario_content:
+  added_components:
+    StorageUnit:
+      bat.ch.sensitivity_2030:
+        attributes:
+        - id: name
+          value: CH grid battery - C sensitivity
+        relations: []
+    Storage.DispatchView:
+      storage_dispatch_view.bat.ch.sensitivity_2030:
+        attributes:
+        - id: nominal_power_capacity
+          value: 1000.0
+          unit: MW
+        - id: energy_storage_capacity
+          value: 4000.0
+          unit: MWh
+        relations:
+        - id: representsAsset
+          target_entity_ids:
+          - bat.ch.sensitivity_2030
+  modified_components:
+    Interconnector.PowerFlowView:
+      pf.ntc.ch.de:
+        attributes:
+          maximum_power_flow_1_to_2:
+            value: 6000.0
+            unit: MW
+  deleted_components:
+    Solar.DispatchView:
+    - solar_dispatch_view.pv.ch.expansion_2030
+    Profile:
+    - profile.esdh.dataset_8238b6b82faa
+    - profile.esdh.dataset_0556db4c69a3
+    - profile.esdh.dataset_0eb71ef2ba3a
