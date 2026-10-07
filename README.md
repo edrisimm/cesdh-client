@@ -429,6 +429,32 @@ python examples\quickstart.py
 
 ---
 
+## SDK Basic Functions Reference
+
+For a complete, copy-pasteable reference of every core SDK function — including
+repositories, branches, datasets, tags, scenarios, lineage, and audit history —
+see [`examples/basic_functions.md`](examples/basic_functions.md).
+
+This guide covers the full surface of the `cesdh` Python SDK in one place:
+
+| Section | What it covers |
+|---|---|
+| Identity | `set_user` / `get_user` — attach your name to every call |
+| Repositories | Create, list, annotate, and delete repositories |
+| Branches | Create, list, annotate, and delete branches |
+| Datasets | Upload, download, list, filter, and soft-delete datasets |
+| Stage + Commit | Git-like stage, inspect diff, commit, or discard workflow |
+| Clone | Snapshot an entire branch to a local directory |
+| Search & SPARQL | Keyword search and direct SPARQL queries against the catalog |
+| Tags | Immutable references for reproducible citations |
+| Scenarios & Lineage | List scenarios, link/unlink datasets, trace lineage |
+| Audit & History | Branch change logs and cross-branch file history |
+
+If you are looking for a specific SDK call or want to understand what
+parameters are available, start there.
+
+---
+
 ## Advanced examples
 
 The `examples/` directory includes four additional end-to-end workflows.
