@@ -41,12 +41,24 @@ See `examples/03_clone_branch.py`, `examples/04_commit_update.py`, and
 - `pip` (included with Python)
 - Credentials from esdh manager (LakeFS access key + secret key)
 
+> **Windows users:** Make sure Python is added to your `PATH` during
+> installation (check "Add Python to PATH" in the installer). Use
+> `python` and `pip` (not `python3` / `pip3`) in all commands below.
+
 ### 1. Install the SDK
 
 From the root of this extracted archive:
 
+**Linux / macOS:**
+
 ```bash
 pip install ./sdk
+```
+
+**Windows (Command Prompt or PowerShell):**
+
+```powershell
+pip install .\sdk
 ```
 
 This installs the `cesdh` package and its dependencies (pandas, h5py, requests,
@@ -56,8 +68,22 @@ pyyaml).
 
 Copy the template and fill in the credentials you received:
 
+**Linux / macOS:**
+
 ```bash
 cp .env.template .env
+```
+
+**Windows (Command Prompt):**
+
+```cmd
+copy .env.template .env
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item .env.template .env
 ```
 
 Edit `.env` and replace the `<ask-esdh-manager>` placeholders:
@@ -71,7 +97,9 @@ LAKEFS_SECRET_ACCESS_KEY=your_secret_key_here
 The SDK auto-loads `.env` from the current working directory when
 `LAKEFS_ACCESS_KEY_ID` is not already in the environment.
 
-Alternatively, export the variables directly in your shell:
+Alternatively, set the variables directly in your shell:
+
+**Linux / macOS:**
 
 ```bash
 export CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch
@@ -79,11 +107,35 @@ export LAKEFS_ACCESS_KEY_ID=your_access_key_here
 export LAKEFS_SECRET_ACCESS_KEY=your_secret_key_here
 ```
 
+**Windows (Command Prompt):**
+
+```cmd
+set CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch
+set LAKEFS_ACCESS_KEY_ID=your_access_key_here
+set LAKEFS_SECRET_ACCESS_KEY=your_secret_key_here
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:CESDH_DATA_HUB_ENDPOINT = "https://fen-esdh.ch"
+$env:LAKEFS_ACCESS_KEY_ID = "your_access_key_here"
+$env:LAKEFS_SECRET_ACCESS_KEY = "your_secret_key_here"
+```
+
 ### 3. Start a trial branch
 
 Before uploading data, create an isolated branch in your repository:
 
+**Linux / macOS:**
+
 ```bash
+python3 start_trial.py trial-<your-username> "my-experiment-name"
+```
+
+**Windows:**
+
+```cmd
 python start_trial.py trial-<your-username> "my-experiment-name"
 ```
 
@@ -121,19 +173,29 @@ SDK calls may fail in ways that look like gateway outages but are actually
 your local network. The four most common patterns:
 
 **1. `ConnectionError: HTTPSConnectionPool(...)`** — The VPN is not
-routing traffic for `fen-esdh.ch`. Run
-`curl -v https://fen-esdh.ch/health` to confirm. If it hangs, add
-`*.fen-esdh.ch` to your split-tunnel include list, or disable
-split-tunnel for this session.
+routing traffic for `fen-esdh.ch`. Verify connectivity:
+
+- **Linux / macOS:** `curl -v https://fen-esdh.ch/health`
+- **Windows (PowerShell):** `Invoke-WebRequest -Uri https://fen-esdh.ch/health`
+
+If it hangs, add `*.fen-esdh.ch` to your split-tunnel include list, or
+disable split-tunnel for this session.
 
 **2. `SSLError: certificate verify failed`** — The VPN's HTTPS
-interception certificate is not trusted by Python. Set
-`export REQUESTS_CA_BUNDLE=/path/to/corp-ca.pem`.
+interception certificate is not trusted by Python.
+
+- **Linux / macOS:** `export REQUESTS_CA_BUNDLE=/path/to/corp-ca.pem`
+- **Windows (Command Prompt):** `set REQUESTS_CA_BUNDLE=C:\path\to\corp-ca.pem`
+- **Windows (PowerShell):** `$env:REQUESTS_CA_BUNDLE = "C:\path\to\corp-ca.pem"`
 
 **3. `socket.gaierror: Name or service not known`** — DNS does not
 resolve the gateway hostname. Use the IP directly:
-`export CESDH_DATA_HUB_ENDPOINT=http://10.42.0.17:8080`, or add the
-hostname to your `/etc/hosts`.
+
+- **Linux / macOS:** `export CESDH_DATA_HUB_ENDPOINT=http://10.42.0.17:8080`,
+  or add the hostname to `/etc/hosts`.
+- **Windows:** `set CESDH_DATA_HUB_ENDPOINT=http://10.42.0.17:8080`,
+  or add the hostname to `C:\Windows\System32\drivers\etc\hosts` (run your
+  editor as Administrator).
 
 **4. First request hangs for 60+ seconds, then succeeds** — This is
 the gateway cold-start (Ollama loading its model). Wait it out, or
@@ -351,9 +413,18 @@ print(f"Found {len(datasets)} CSV dataset(s) on main")
 The included `examples/quickstart.py` performs a full round-trip (upload,
 search, download, verify SHA-256) in under a minute:
 
+**Linux / macOS:**
+
 ```bash
 cd /path/to/cesdh-client
-python examples/quickstart.py
+python3 examples/quickstart.py
+```
+
+**Windows:**
+
+```cmd
+cd C:\path\to\cesdh-client
+python examples\quickstart.py
 ```
 
 ---
@@ -375,8 +446,16 @@ Sample data files are bundled under `data/`.
 
 Run any of them from the `cesdh-client/` directory:
 
+**Linux / macOS:**
+
 ```bash
-python examples/raw_data_hub_lifecycle.py
+python3 examples/raw_data_hub_lifecycle.py
+```
+
+**Windows:**
+
+```cmd
+python examples\raw_data_hub_lifecycle.py
 ```
 
 > **Note:** `multi_researcher_cesdm_workflow.py` and
@@ -424,10 +503,14 @@ applicable.
 
 ## Quick reference
 
+> Commands below use Linux/macOS syntax. On Windows, replace `pip3`/`python3`
+> with `pip`/`python`, forward slashes with backslashes, and `export VAR=val`
+> with `set VAR=val` (Command Prompt) or `$env:VAR = "val"` (PowerShell).
+
 | Task | Command |
 |---|---|
-| Install SDK | `pip install ./sdk` |
-| Set remote endpoint | `export CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch` |
+| Install SDK | `pip install ./sdk` (Linux/macOS) · `pip install .\sdk` (Windows) |
+| Set remote endpoint | `export CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch` (Linux/macOS) · `set CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch` (Windows) |
 | Set your identity | `cesdh.set_user("alice", "Alice from FEN-team")` |
 | Upload a file | `cesdh.upload_raw("file.csv", owner="you", repository="my-project")` |
 | Search | `cesdh.search("query", repository="my-project")` |
