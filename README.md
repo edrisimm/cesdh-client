@@ -4,6 +4,24 @@ Welcome to the remote trial of the **Energy Systems Data Hub** (the Data Hub).
 This package contains everything you need to interact with the shared platform
 from your local machine: the Python SDK, example scripts, and sample data.
 
+---
+
+## What's new
+
+| Feature | SDK call | When to use |
+|---|---|---|
+| Identify yourself | `cesdh.set_user("alice", "Alice from FEN-team")` | Once at the top of every notebook or script. Every SDK call now carries `X-ESDH-User-Id` / `X-ESDH-User-Name`. |
+| Clone a branch | `cesdh.clone_branch("main", "./mirror", repository="<repo>")` | Mirror every active dataset on a branch into a local directory. Git-like: the local copy is a snapshot at HEAD. |
+| Commit an update | `cesdh.stage_dataset_update(...)` then `cesdh.commit_dataset_update(...)` | Replace "updating a dataset" with stage + commit, exactly like `git add` + `git commit`. |
+| Delete a branch | `cesdh.delete_branch("old-branch", repository="<repo>")` | Remove a branch pointer (commits stay in LakeFS history). |
+| Repository metadata | `cesdh.set_repository_metadata(repository, title, ...)` | Annotate a project with owner, themes, spatial coverage. |
+| Branch metadata | `cesdh.set_branch_metadata(branch, repository, title, ...)` | Tag a branch with hypothesis, target year, keywords. |
+
+See `examples/03_clone_branch.py`, `examples/04_commit_update.py`, and
+`examples/05_user_identity.py` for runnable demos.
+
+---
+
 **Service endpoints (Infomaniak VPS):**
 
 | Service | URL |
@@ -95,6 +113,33 @@ reachable in your browser.
 > |---|---|
 > | Local (Docker stack) | `http://localhost:8080` (default) |
 > | Remote (VPS trial) | `https://fen-esdh.ch` |
+
+### VPN troubleshooting
+
+If you connect through a VPN, split-tunnel, or SSH-over-HTTPS proxy,
+SDK calls may fail in ways that look like gateway outages but are actually
+your local network. The four most common patterns:
+
+**1. `ConnectionError: HTTPSConnectionPool(...)`** — The VPN is not
+routing traffic for `fen-esdh.ch`. Run
+`curl -v https://fen-esdh.ch/health` to confirm. If it hangs, add
+`*.fen-esdh.ch` to your split-tunnel include list, or disable
+split-tunnel for this session.
+
+**2. `SSLError: certificate verify failed`** — The VPN's HTTPS
+interception certificate is not trusted by Python. Set
+`export REQUESTS_CA_BUNDLE=/path/to/corp-ca.pem`.
+
+**3. `socket.gaierror: Name or service not known`** — DNS does not
+resolve the gateway hostname. Use the IP directly:
+`export CESDH_DATA_HUB_ENDPOINT=http://10.42.0.17:8080`, or add the
+hostname to your `/etc/hosts`.
+
+**4. First request hangs for 60+ seconds, then succeeds** — This is
+the gateway cold-start (Ollama loading its model). Wait it out, or
+pre-warm with `cesdh.list_datasets(repository="quickstart", limit=1)`.
+
+For the full playbook, see [`docs/vpn_troubleshooting.md`](docs/vpn_troubleshooting.md).
 
 ---
 
@@ -269,6 +314,9 @@ Sample data files are bundled under `data/`.
 
 | Script | What it demonstrates |
 |---|---|
+| `03_clone_branch.py` | Clone every active dataset on a branch into a local working tree — Git-like snapshot at HEAD. |
+| `04_commit_update.py` | Stage a new file version and commit it atomically — the Git-like stage + commit flow. |
+| `05_user_identity.py` | Set and inspect the calling identity (`set_user` / `get_user`) — every call carries your name. |
 | `raw_data_hub_lifecycle.py` | Stage, upload, annotate and search raw time-series data (CSV) with DCAT metadata. Self-contained — fetches open data or falls back to synthetic profiles. |
 | `multi_researcher_cesdm_workflow.py` | Two-researcher handoff: A curates raw data, B builds a CESDM scenario and sub-scenario delta, then lineage traces back to A's inputs. |
 | `project_tutorial_ch_neighbours.py` | Builds the CESDM "Switzerland + neighbours" 5-country model, exports in 7 formats, uploads all artifacts, and verifies the round-trip. |
@@ -329,9 +377,12 @@ applicable.
 |---|---|
 | Install SDK | `pip install ./sdk` |
 | Set remote endpoint | `export CESDH_DATA_HUB_ENDPOINT=https://fen-esdh.ch` |
+| Set your identity | `cesdh.set_user("alice", "Alice from FEN-team")` |
 | Upload a file | `cesdh.upload_raw("file.csv", owner="you", repository="my-project")` |
 | Search | `cesdh.search("query", repository="my-project")` |
 | Download to DataFrame | `cesdh.download_to_dataframe("dataset_id", repository="my-project")` |
+| Clone a branch | `cesdh.clone_branch("main", "./mirror", repository="my-project")` |
+| Stage + commit | `cesdh.stage_dataset_update(...)` then `cesdh.commit_dataset_update(...)` |
 | List datasets | `cesdh.list_datasets(repository="my-project")` |
 | Open dashboard | <https://dash.fen-esdh.ch> |
 | Open docs | <https://docs.fen-esdh.ch> |

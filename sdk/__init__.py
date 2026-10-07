@@ -7,6 +7,18 @@ from typing import List, Optional, Union
 from .client import CesDHQueryError  # re-exported for callers  # noqa: F401
 from .client import EnergyDLMClient as _EnergyDLMClient
 
+# Multi-level search models, re-exported so callers can type-annotate results
+# without reaching into the submodule.
+from .models import (  # noqa: F401
+    BranchLevel,
+    DatasetLevel,
+    EnhancedSearchResult,
+    MetadataHierarchy,
+    QualitySummary,
+    RepositoryLevel,
+    SchemaLevel,
+)
+
 
 def _load_dotenv_if_needed() -> None:
     """Load .env from the repo root into os.environ without overriding existing vars.
@@ -67,6 +79,29 @@ DEFAULT_ENDPOINT = os.getenv("CESDH_DATA_HUB_ENDPOINT", "http://localhost:8080")
 CESDHClient = _EnergyDLMClient
 
 _clients: dict = {}
+
+_active_user: tuple[str, str] = ("anonymous", "Anonymous")
+
+
+def set_user(user_id: str, display_name: str) -> None:
+    """Set the calling identity for subsequent SDK calls.
+
+    Mirrors ``git config user.name`` — once set, every upload, create,
+    and delete carries this identity in the X-ESDH-User-Id and
+    X-ESDH-User-Name headers. The gateway stamps it into PROV-O triples
+    and the audit log.
+    """
+    global _active_user
+    if not user_id or not isinstance(user_id, str):
+        raise ValueError("'user_id' must be a non-empty string")
+    if not display_name or not isinstance(display_name, str):
+        raise ValueError("'display_name' must be a non-empty string")
+    _active_user = (user_id.strip(), display_name.strip())
+
+
+def get_user() -> tuple:
+    """Return (user_id, display_name) — the identity passed on subsequent calls."""
+    return _active_user
 
 
 def _client_for(repository: str) -> _EnergyDLMClient:
@@ -167,19 +202,31 @@ def create_repository(repository: str) -> dict:
     return _client_for(repository).create_repository()
 
 
-def delete_repository(repository: str, confirm: str) -> dict:
-    """Tear down repository across Fuseki, LakeFS and MinIO. Irreversible.
+def delete_repository(repository: str, *, confirm: bool = False) -> dict:
+    """Soft-delete a repository: archive immediately, queue physical teardown.
 
-    `confirm` must equal `repository`; a mismatch raises HTTP 400 and changes
-    nothing. Returns a per-store teardown report.
+    Returns ``{"status": "archived", "repository": ...}`` within 1 second.
+    The physical teardown runs in the background on the gateway.
+
+    ``confirm=True`` is required to prevent accidental calls from notebooks.
     """
-    return _client_for(repository).delete_repository(confirm)
+    return _client_for(repository).delete_repository(confirm=confirm)
 
 
 def create_branch(branch: str, repository: str, source: str = "main") -> dict:
     """Create branch off source in repository; raises HTTP 409 if it exists."""
     _validate_branch(branch)
     return _client_for(repository).create_branch(branch, source=source)
+
+
+def delete_branch(branch: str, repository: str) -> dict:
+    """Delete a branch from the repository.
+
+    The default branch cannot be deleted (raises HTTP 409). Commits remain
+    in LakeFS history until garbage collection runs.
+    """
+    _validate_branch(branch)
+    return _client_for(repository).delete_branch(branch)
 
 
 def create_tag(tag: str, repository: str, ref: str = "main") -> dict:
@@ -198,6 +245,83 @@ def list_tags(repository: str) -> list:
     return _client_for(repository).list_tags()
 
 
+# ------------------------------------------------------------------ #
+# Repository / branch metadata
+# ------------------------------------------------------------------ #
+
+
+def set_repository_metadata(
+    repository: str,
+    title: str,
+    *,
+    description: Optional[str] = None,
+    owner: Optional[str] = None,
+    spatial_coverage: Optional[Union[str, List[str]]] = None,
+    energy_carriers: Optional[List[str]] = None,
+    themes: Optional[List[str]] = None,
+    keywords: Optional[List[str]] = None,
+    model_frameworks: Optional[List[str]] = None,
+    funding_program: Optional[str] = None,
+    publisher: Optional[str] = None,
+) -> dict:
+    """Set or replace structured metadata for a repository (DCAT Catalog node).
+
+    Only ``title`` is required. All other fields are optional and will be
+    written as DCAT/DCTerms/energy predicates in the catalog graph.
+    """
+    return _client_for(repository).set_repository_metadata(
+        title,
+        description=description,
+        owner=owner,
+        spatial_coverage=spatial_coverage,
+        energy_carriers=energy_carriers,
+        themes=themes,
+        keywords=keywords,
+        model_frameworks=model_frameworks,
+        funding_program=funding_program,
+        publisher=publisher,
+    )
+
+
+def get_repository_metadata(repository: str) -> dict:
+    """Read structured metadata for a repository. Raises HTTPError 404 if none set."""
+    return _client_for(repository).get_repository_metadata()
+
+
+def set_branch_metadata(
+    branch: str,
+    repository: str,
+    title: str,
+    *,
+    description: Optional[str] = None,
+    owner: Optional[str] = None,
+    target_year: Optional[str] = None,
+    spatial_coverage: Optional[Union[str, List[str]]] = None,
+    energy_carriers: Optional[List[str]] = None,
+    themes: Optional[List[str]] = None,
+    keywords: Optional[List[str]] = None,
+    hypothesis: Optional[str] = None,
+) -> dict:
+    """Set or replace structured metadata for a branch (energy:Branch node)."""
+    return _client_for(repository).set_branch_metadata(
+        branch,
+        title,
+        description=description,
+        owner=owner,
+        target_year=target_year,
+        spatial_coverage=spatial_coverage,
+        energy_carriers=energy_carriers,
+        themes=themes,
+        keywords=keywords,
+        hypothesis=hypothesis,
+    )
+
+
+def get_branch_metadata(branch: str, repository: str) -> dict:
+    """Read structured metadata for a branch. Raises HTTPError 404 if none set."""
+    return _client_for(repository).get_branch_metadata(branch)
+
+
 def search(query: str, repository: str, limit: int = 10, timeout: int = 60) -> dict:
     return _client_for(repository).search(query, limit=limit, timeout=timeout)
 
@@ -206,8 +330,133 @@ def sparql(query: str, repository: str) -> dict:
     return _client_for(repository).sparql(query)
 
 
-def delete_dataset(dataset_id: str, repository: str) -> dict:
-    return _client_for(repository).delete_dataset(dataset_id)
+def search_datasets_with_summary(
+    query: str,
+    repository: str,
+    filters: Optional[dict] = None,
+    limit: int = 25,
+) -> List[EnhancedSearchResult]:
+    """Search the catalog, returning each hit with its full metadata hierarchy.
+
+    Each result carries Repository / Branch / Dataset / Schema / Quality levels,
+    so a caller can show what a dataset is, where it came from and whether it
+    can be trusted without issuing a follow-up query per hit.
+
+        >>> import cesdh
+        >>> hits = cesdh.search_datasets_with_summary(
+        ...     "solar irradiation",
+        ...     repository="multi-researcher-demo",
+        ...     filters={"environment": "PROD", "quality": "passing_only"},
+        ... )
+        >>> hits[0].breadcrumb
+        'multi-researcher-demo / main (PROD) > CH_solar_irradiation_2024.csv'
+
+    See :meth:`EnergyDLMClient.search_datasets_with_summary` for the filter
+    vocabulary.
+    """
+    return _client_for(repository).search_datasets_with_summary(
+        query, filters=filters, limit=limit
+    )
+
+
+def search_summary_frame(
+    query: str,
+    repository: str,
+    filters: Optional[dict] = None,
+    limit: int = 25,
+) -> "pd.DataFrame":
+    """Flattened DataFrame form of :func:`search_datasets_with_summary`."""
+    return _client_for(repository).search_summary_frame(
+        query, filters=filters, limit=limit
+    )
+
+
+# ------------------------------------------------------------------ #
+# Staging & commit (Git-like update flow)
+# ------------------------------------------------------------------ #
+
+
+def stage_dataset_update(
+    dataset_id: str, file_path: str, repository: str, *, branch: str = "main",
+) -> dict:
+    """Upload new bytes to LakeFS without committing."""
+    return _client_for(repository).stage_dataset_update(
+        dataset_id, file_path, branch=branch,
+    )
+
+
+def get_staged_changes(
+    dataset_id: str, repository: str, *, branch: str = "main",
+) -> dict:
+    """Return the diff summary for uncommitted changes."""
+    return _client_for(repository).get_staged_changes(dataset_id, branch=branch)
+
+
+def commit_dataset_update(
+    dataset_id: str,
+    repository: str,
+    commit_message: str,
+    *,
+    branch: str = "main",
+    description: str = "",
+    parent_commit_sha: Optional[str] = None,
+) -> dict:
+    """Atomically commit staged bytes as a new commit on branch."""
+    return _client_for(repository).commit_dataset_update(
+        dataset_id, commit_message, branch=branch,
+        description=description, parent_commit_sha=parent_commit_sha,
+    )
+
+
+def discard_staged_changes(
+    dataset_id: str, repository: str, *, branch: str = "main",
+) -> None:
+    """Drop uncommitted changes without committing."""
+    _client_for(repository).discard_staged_changes(dataset_id, branch=branch)
+
+
+def clone_branch(
+    branch: str,
+    destination: str,
+    repository: str,
+    *,
+    tier: Optional[str] = None,
+    include_superseded: bool = False,
+) -> List[str]:
+    """Download every active dataset on branch to disk under destination.
+
+    Mirror of EnergyDLMClient.clone_branch. See that method for the full
+    contract; the highlights are:
+
+    - Preserves the storage hierarchy under destination.
+    - Optional ``tier`` filter (raw|transformed|analytics).
+    - The clone is a snapshot of the branch's HEAD commit; subsequent
+      commits do not affect the local files.
+
+    Examples:
+        >>> import cesdh
+        >>> cesdh.set_user("alice", "Alice from FEN-team")
+        >>> cesdh.clone_branch(
+        ...     "main", "/tmp/esdh-mirror", repository="energy-repository"
+        ... )
+        ['/tmp/esdh-mirror/raw/dataset_abc/foo.csv', ...]
+    """
+    _validate_branch(branch)
+    return _client_for(repository).clone_branch(
+        branch,
+        destination,
+        tier=tier,
+        include_superseded=include_superseded,
+    )
+
+
+def delete_dataset(dataset_id: str, repository: str, *, branch: str = "main") -> dict:
+    """Drop a dataset from a branch via a system commit.
+
+    The physical file stays in LakeFS history. The catalog marks the
+    dataset as superseded (self-supersession = explicit deletion).
+    """
+    return _client_for(repository).delete_dataset(dataset_id, branch=branch)
 
 
 def delete_scenario(

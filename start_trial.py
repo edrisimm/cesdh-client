@@ -93,6 +93,11 @@ def main() -> int:
 
     gateway = os.environ.get("CESDH_DATA_HUB_ENDPOINT", "https://fen-esdh.ch")
 
+    # ── Set user identity (stamps every SDK call) ────────────────────────
+    _uid = os.environ.get("CESDH_USER_ID", repo)
+    _uname = os.environ.get("CESDH_USER_NAME", repo)
+    cesdh.set_user(_uid, _uname)
+
     # ── Build branch + tag names ─────────────────────────────────────────
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     slug = slugify(trial_name)

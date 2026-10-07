@@ -1,5 +1,10 @@
+from __future__ import annotations
+
 import io
 import os
+import tempfile
+import zipfile
+from typing import List, Optional
 
 import pandas as pd
 import requests
@@ -17,6 +22,7 @@ class EnergyDLMClient:
         lakefs_url: str = "http://localhost:8000",
         lakefs_access_key: str | None = None,
         lakefs_secret_key: str | None = None,
+        provider=None,
     ):
         if not repository or not repository.strip():
             raise ValueError(
@@ -30,10 +36,24 @@ class EnergyDLMClient:
             lakefs_access_key or os.environ.get("LAKEFS_ACCESS_KEY_ID", ""),
             lakefs_secret_key or os.environ.get("LAKEFS_SECRET_ACCESS_KEY", ""),
         )
+        # Metadata backend for enriched search. Defaults to this platform's own
+        # Fuseki catalog; pass a different MetadataProvider to resolve the same
+        # search contract against another catalogue (see metadata_providers).
+        # Imported lazily so `import cesdh` stays cheap and cycle-free.
+        if provider is None:
+            from .metadata_providers import EsdhMetadataProvider
+
+            provider = EsdhMetadataProvider(self)
+        self._metadata_provider = provider
 
     def _repo_headers(self) -> dict:
-        """Return the X-CESDH-Repository header identifying this client's project."""
-        return {"X-CESDH-Repository": self.repository}
+        """Return headers for every gateway call: repository scope + user identity."""
+        from . import _active_user
+        headers = {"X-CESDH-Repository": self.repository}
+        uid, uname = _active_user
+        headers["X-ESDH-User-Id"] = uid
+        headers["X-ESDH-User-Name"] = uname
+        return headers
 
     # ------------------------------------------------------------------ #
     # Ingestion
@@ -115,21 +135,24 @@ class EnergyDLMClient:
         resp.raise_for_status()
         return resp.json()
 
-    def delete_repository(self, confirm: str) -> dict:
-        """Tear down this repository across Fuseki, LakeFS and MinIO.
+    def delete_repository(self, confirm: bool = False) -> dict:
+        """Soft-delete this repository: mark as archived, queue physical teardown.
 
-        Destructive and irreversible. `confirm` must equal the repository name;
-        anything else is a 400 and nothing is touched.
+        Returns 202 with ``{"status": "archived", "repository": ...}``
+        immediately. The physical teardown (Fuseki, LakeFS, MinIO) runs in
+        the background. The repository disappears from listings immediately.
 
-        This exists because removing a repository by hand desynchronises the
-        platform: catalog rows survive and can no longer be deleted, and the
-        MinIO bucket blocks the project name from ever being reused. Returns a
-        per-store report so a partial teardown is visible.
+        ``confirm=True`` is required to prevent accidental calls from notebooks.
         """
+        if not confirm:
+            raise ValueError(
+                "Refusing to delete without confirm=True — this is irreversible. "
+                "Soft-delete archives the namespace; physical teardown is queued."
+            )
         resp = requests.delete(
             f"{self.gateway_url}/versioning/repository",
             headers=self._repo_headers(),
-            params={"confirm": confirm},
+            params={"confirm": self.repository},
             timeout=120,
         )
         resp.raise_for_status()
@@ -145,6 +168,20 @@ class EnergyDLMClient:
             f"{self.gateway_url}/versioning/branches",
             headers=self._repo_headers(),
             json={"branch": safe_branch, "source": source},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def delete_branch(self, branch: str) -> dict:
+        """Delete a branch from the repository.
+
+        The default branch cannot be deleted (raises HTTP 409).
+        Commits remain in LakeFS history until garbage collection.
+        """
+        resp = requests.delete(
+            f"{self.gateway_url}/versioning/branches/{branch}",
+            headers=self._repo_headers(),
+            timeout=15,
         )
         resp.raise_for_status()
         return resp.json()
@@ -169,6 +206,52 @@ class EnergyDLMClient:
         """Return every tag in this repository as a list of dicts."""
         resp = requests.get(
             f"{self.gateway_url}/versioning/tags", headers=self._repo_headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    # ------------------------------------------------------------------ #
+    # Repository / branch metadata
+    # ------------------------------------------------------------------ #
+
+    def set_repository_metadata(self, title: str, **kwargs) -> dict:
+        """Set or replace structured metadata for this repository."""
+        body = {"title": title, **{k: v for k, v in kwargs.items() if v is not None}}
+        resp = requests.post(
+            f"{self.gateway_url}/versioning/repository/metadata",
+            json=body,
+            headers=self._repo_headers(),
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_repository_metadata(self) -> dict:
+        """Read structured metadata for this repository."""
+        resp = requests.get(
+            f"{self.gateway_url}/versioning/repository/metadata",
+            headers=self._repo_headers(),
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def set_branch_metadata(self, branch: str, title: str, **kwargs) -> dict:
+        """Set or replace structured metadata for a branch."""
+        body = {"branch": branch, "title": title,
+                **{k: v for k, v in kwargs.items() if v is not None}}
+        resp = requests.post(
+            f"{self.gateway_url}/versioning/branches/metadata",
+            json=body,
+            headers=self._repo_headers(),
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_branch_metadata(self, branch: str) -> dict:
+        """Read structured metadata for a branch."""
+        resp = requests.get(
+            f"{self.gateway_url}/versioning/branches/metadata",
+            params={"branch": branch},
+            headers=self._repo_headers(),
         )
         resp.raise_for_status()
         return resp.json()
@@ -260,9 +343,18 @@ class EnergyDLMClient:
     def download_to_file(self, dataset_id: str, destination: str) -> str:
         """Stream a dataset file from the gateway directly to disk without loading it into RAM.
 
+        If *destination* is a directory, the original filename is resolved from
+        the catalog and the file is saved as ``destination/<original_name>``.
+        If *destination* is a file path, it is used as-is.
+
         Use this instead of download_to_dataframe() for large HDF5 / CSV files that
         exceed available memory. Returns the resolved destination path.
         """
+        # When destination is a directory, resolve the original filename
+        if os.path.isdir(destination):
+            original_name = self._resolve_filename(dataset_id)
+            destination = os.path.join(destination, original_name)
+
         with requests.get(
             f"{self.gateway_url}/datasets/{dataset_id}/download",
             headers=self._repo_headers(),
@@ -274,6 +366,33 @@ class EnergyDLMClient:
                 fh.writelines(resp.iter_content(chunk_size=8 * 1024 * 1024))
         return destination
 
+    def _resolve_filename(self, dataset_id: str) -> str:
+        """Fetch the original filename from the catalog via the resolve endpoint.
+
+        Falls back to dataset_id if the filename cannot be determined.
+        """
+        try:
+            resp = requests.get(
+                f"{self.gateway_url}/datasets/{dataset_id}/resolve",
+                headers=self._repo_headers(),
+                timeout=15,
+            )
+            resp.raise_for_status()
+            meta = resp.json()
+            # lakefs_uri has the form lakefs://repo/branch/raw/dataset_id/filename
+            lakefs_uri = meta.get("lakefs_uri", "")
+            if lakefs_uri:
+                name = lakefs_uri.rstrip("/").rsplit("/", 1)[-1]
+                if name:
+                    return name
+            # Try format field to at least give the fallback an extension
+            fmt = meta.get("format", "")
+            if fmt:
+                return f"{dataset_id}.{fmt}"
+        except Exception:
+            pass
+        return dataset_id
+
     def _download_from_gateway(self, dataset_id: str) -> bytes:
         resp = requests.get(
             f"{self.gateway_url}/datasets/{dataset_id}/download",
@@ -282,6 +401,105 @@ class EnergyDLMClient:
         )
         resp.raise_for_status()
         return resp.content
+
+    def clone_branch(
+        self,
+        branch: str,
+        destination: str,
+        *,
+        tier: Optional[str] = None,
+        include_superseded: bool = False,
+    ) -> List[str]:
+        """Download every active dataset on branch to disk under destination.
+
+        Preserves the storage hierarchy (tier/dataset_id/filename) under the
+        destination directory. If ``tier`` is supplied, restricts the clone to
+        that tier (raw|transformed|analytics). Returns the list of resolved
+        local paths in tier/dataset_id/filename order.
+
+        Git-like semantics:
+          - The clone is a snapshot of the branch's HEAD commit.
+          - Future commits to the branch do not change the local files.
+          - Re-cloning at the same HEAD returns identical files.
+          - The branch is not modified; no commit is created.
+
+        Raises:
+            requests.HTTPError: on non-2xx gateway responses.
+            requests.exceptions.ConnectionError: if the gateway is unreachable.
+            RuntimeError: if the ZIP stream is malformed or contains no entries.
+            ValueError: if tier is not one of raw/transformed/analytics/None,
+                or if branch or destination are invalid.
+        """
+        # Validate inputs
+        branch = self._safe_id(branch, "branch")
+        if tier is not None:
+            if tier.lower() not in ("raw", "transformed", "analytics"):
+                raise ValueError(
+                    f"tier must be one of 'raw', 'transformed', 'analytics', or None "
+                    f"(got {tier!r})"
+                )
+            tier = tier.lower()
+        if not isinstance(include_superseded, bool):
+            raise ValueError("include_superseded must be a bool")
+        if not destination or not isinstance(destination, str):
+            raise ValueError("destination must be a non-empty string path")
+
+        # POST to the clone endpoint
+        body: dict = {"include_superseded": include_superseded}
+        if tier is not None:
+            body["tier"] = tier
+
+        with requests.post(
+            f"{self.gateway_url}/repos/{self.repository}/branches/{branch}/clone",
+            json=body,
+            headers=self._repo_headers(),
+            timeout=600,
+            stream=True,
+        ) as resp:
+            resp.raise_for_status()
+
+            # Stream to a temp file
+            tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+            tmp_path = tmp.name
+            try:
+                for chunk in resp.iter_content(chunk_size=8 * 1024 * 1024):
+                    if chunk:
+                        tmp.write(chunk)
+                tmp.close()
+
+                # Extract the ZIP
+                os.makedirs(destination, exist_ok=True)
+                extracted: List[str] = []
+
+                with zipfile.ZipFile(tmp_path, "r") as zf:
+                    for member in zf.infolist():
+                        if member.is_dir():
+                            continue
+                        # Security: reject path-traversal entries
+                        if ".." in member.filename or member.filename.startswith("/"):
+                            continue
+                        target = os.path.join(destination, member.filename)
+                        os.makedirs(os.path.dirname(target), exist_ok=True)
+                        with zf.open(member) as src, open(target, "wb") as dst:
+                            while True:
+                                chunk = src.read(8 * 1024 * 1024)
+                                if not chunk:
+                                    break
+                                dst.write(chunk)
+                        extracted.append(os.path.abspath(target))
+
+                extracted.sort()
+                return extracted
+
+            except zipfile.BadZipFile as exc:
+                raise RuntimeError(
+                    f"Gateway returned a malformed ZIP for {self.repository}/{branch}: {exc}"
+                ) from exc
+            finally:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
 
     # ------------------------------------------------------------------ #
     # Search
@@ -306,13 +524,143 @@ class EnergyDLMClient:
         resp.raise_for_status()
         return resp.json()
 
+    def search_datasets_with_summary(
+        self,
+        query: str,
+        filters: dict | None = None,
+        limit: int = 25,
+    ) -> list:
+        """Search the catalog and return each hit resolved across every metadata level.
+
+        Unlike :meth:`search` (which runs the NL translator) and :meth:`sparql`
+        (which returns raw bindings), this returns
+        :class:`~cesdh.models.EnhancedSearchResult` objects carrying the full
+        Repository / Branch / Dataset / Schema / Quality breakdown, so a caller
+        can render a result card without a follow-up request per row.
+
+        Parameters
+        ----------
+        query:
+            Free-text terms. Every term must match at least one of title,
+            filename, format, branch, owner or keyword. Pass ``""`` to browse.
+        filters:
+            Optional facets. Predicate-backed: ``branch``, ``format``,
+            ``entity_class``, ``theme``, ``energy_carrier``, ``owner``,
+            ``scenario``. Derived (applied after the query): ``environment``
+            (``"PROD"`` / ``"STG"`` / ``"DEV"``) and ``quality``
+            (``"passing_only"`` / ``"issues_only"``). ``include_superseded``
+            (bool) lifts the default lifecycle filter.
+        limit:
+            Maximum results returned.
+
+        Notes
+        -----
+        Resolved in a fixed number of round trips regardless of result count -
+        one SPARQL query plus one REST call per distinct branch - rather than
+        one lookup per hit. See ``metadata_providers`` for the backend contract.
+        """
+        return self._metadata_provider.search_with_summary(
+            query, filters=filters, limit=limit
+        )
+
+    def search_summary_frame(
+        self,
+        query: str,
+        filters: dict | None = None,
+        limit: int = 25,
+    ) -> pd.DataFrame:
+        """Same search as :meth:`search_datasets_with_summary`, flattened to a DataFrame.
+
+        Provided because the platform's semantic abstraction rule expects
+        tabular SDK results to come back as pandas. Use the object form when
+        the nested levels matter, this one for analysis or export.
+        """
+        results = self.search_datasets_with_summary(query, filters=filters, limit=limit)
+        columns = [
+            "dataset_id", "title", "file_name", "format", "repository", "branch",
+            "environment", "owner", "entity_classes", "quality", "pass_rate",
+            "size", "issued",
+        ]
+        if not results:
+            return pd.DataFrame(columns=columns)
+        return pd.DataFrame([r.to_row() for r in results], columns=columns)
+
+    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------ #
+    # Staging & commit (Git-like update flow)
+    # ------------------------------------------------------------------ #
+
+    def stage_dataset_update(self, dataset_id: str, file_path: str, *,
+                             branch: str = "main") -> dict:
+        """Upload new bytes to LakeFS without committing."""
+        with open(file_path, "rb") as f:
+            files = {"file": (os.path.basename(file_path), f)}
+            resp = requests.post(
+                f"{self.gateway_url}/datasets/{dataset_id}/stage",
+                params={"branch": branch},
+                files=files,
+                headers=self._repo_headers(),
+                timeout=300,
+            )
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_staged_changes(self, dataset_id: str, *,
+                           branch: str = "main") -> dict:
+        """Return uncommitted changes for a dataset on a branch."""
+        resp = requests.get(
+            f"{self.gateway_url}/datasets/{dataset_id}/staged",
+            params={"branch": branch},
+            headers=self._repo_headers(),
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def commit_dataset_update(self, dataset_id: str, commit_message: str, *,
+                              branch: str = "main", description: str = "",
+                              parent_commit_sha: str | None = None) -> dict:
+        """Atomically commit staged bytes as a new commit on branch."""
+        body: dict = {"commit_message": commit_message}
+        if description:
+            body["description"] = description
+        if parent_commit_sha:
+            body["parent_commit_sha"] = parent_commit_sha
+        resp = requests.post(
+            f"{self.gateway_url}/datasets/{dataset_id}/commit",
+            params={"branch": branch},
+            json=body,
+            headers=self._repo_headers(),
+            timeout=60,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def discard_staged_changes(self, dataset_id: str, *,
+                               branch: str = "main") -> dict:
+        """Drop uncommitted changes without committing."""
+        resp = requests.delete(
+            f"{self.gateway_url}/datasets/{dataset_id}/staged",
+            params={"branch": branch},
+            headers=self._repo_headers(),
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     # ------------------------------------------------------------------ #
     # Deletion
     # ------------------------------------------------------------------ #
 
-    def delete_dataset(self, dataset_id: str) -> dict:
+    def delete_dataset(self, dataset_id: str, *, branch: str = "main") -> dict:
+        """Drop a dataset from a branch via a system commit.
+
+        The physical file stays in LakeFS history. Previous commits still
+        reference it. The catalog marks the dataset as superseded.
+        """
         resp = requests.delete(
             f"{self.gateway_url}/datasets/{dataset_id}",
+            params={"branch": branch},
             headers=self._repo_headers(),
             timeout=60,
         )
