@@ -143,49 +143,100 @@ For the full playbook, see [`docs/vpn_troubleshooting.md`](docs/vpn_troubleshoot
 
 ---
 
-## Section B: Dashboard & Catalog Browsing
+## Section B: Dashboard
 
 The web dashboard at **<https://dash.fen-esdh.ch>** lets you explore the
 platform without writing any code.
 
-### Catalog tab
+### Welcome & identity
 
-The **Catalog** tab is the main entry point. Use the sidebar filters to narrow
-results:
+On your first visit the dashboard shows a welcome page. Enter a **Display
+name** (shown in commit history and audit logs) and optionally a **User ID**
+(auto-generated if left blank), then click **Enter the workspace**. This is
+self-declared identity — the same model as `git config user.name`.
 
-- **Repository** — select the project repository to browse (e.g. `quickstart`,
-  `my-project`)
-- **Branch** — filter by LakeFS branch (e.g. `main`, `dev-2024-update`)
-- **Format** — filter by file type (`yaml`, `csv`, `json`, `h5`)
-- **Entity Class** — filter by CESDM entity class (e.g. `ThermalGenerationUnit`)
+### Layout
 
-Each row shows the dataset ID, title, format, branch, upload time, and
-validation status. Click a dataset ID to see its full metadata.
+After signing in, the dashboard has three regions:
+
+| Region | Location | What it contains |
+|---|---|---|
+| **View switcher** | Top centre | Toggle between the two views below. |
+| **Main panel** | Left | The active view's content (search results or dataset cards). |
+| **Drawer** | Right | Repository and branch selectors, upload button, discover filters, gateway status. |
+
+The **left sidebar** (collapsed by default — click the hamburger or swipe
+from the left edge) shows a description of the active view and quick links
+to the Gateway API docs, User Guide, and SDK Reference.
+
+### View 1: Discovering & Searching
+
+Search the entire catalog across one or all repositories. Type keywords in
+the search bar (or leave it blank to browse everything), pick a repository
+scope, and adjust the result limit.
+
+**Drawer filters** (right panel) narrow results by:
+
+- **Branch** — only datasets on this branch
+- **Format** — `csv`, `yaml`, `json`, `hdf5`, etc.
+- **Domain / theme** — topics assigned during upload
+- **Include superseded** — toggle to show older revisions that have been
+  replaced by a newer upload
+
+Each result is a **dataset card** showing the format badge, title, dataset
+ID, description, keywords, and a provenance strip (owner, repository,
+branch, upload date, file size). Cards have four action buttons:
+
+| Button | Action |
+|---|---|
+| 💻 | Copy a Python SDK snippet for this dataset |
+| 📝 | Stage an update (upload a new version and commit) |
+| ⬇ | Download the file to your browser |
+| 🗑 | Drop the dataset from this branch (soft-delete) |
+
+Below the cards, an **Export these results (CSV)** button downloads the
+current result set as a spreadsheet.
+
+### View 2: Working in a Repository
+
+Browse the datasets in one specific repository and branch. The drawer on
+the right controls which repository and branch you are looking at.
+
+**Drawer actions:**
+
+- **Repository selector** — pick an existing project or type a new name.
+- **Branch selector** — pick a branch. Use ➕ to create one, 🗑 to delete
+  one, 🧬 to clone the branch as a ZIP download.
+- **New repository** / **Delete repository** — lifecycle buttons.
+- **Upload dataset** — opens a dialog to upload a file to the selected
+  branch (max ~200 MB via browser; for larger files the dialog offers a
+  ready-to-run SDK snippet).
+
+The main panel shows a breadcrumb (`Repositories › repo › ⎇ branch`), a
+repository summary card, and the dataset grid. Use the filter/sort row
+above the grid to narrow by title, keyword, or owner, and sort by newest,
+name, or size.
 
 ### SDK snippet generator
 
-The Catalog tab includes a **"Copy SDK snippet"** button for each dataset. It
-generates a ready-to-paste Python snippet:
+Every dataset card includes a **💻** button that opens a dialog with a
+copy-pasteable Python snippet:
 
 ```python
 import cesdh
-df = cesdh.download_to_dataframe("dataset_abc123", repository="my-project")
-df.head()
+
+df = cesdh.download_to_dataframe(
+    "dataset_abc123",
+    repository="my-project",
+)
 ```
 
-### Query Console tab
+### Large file upload handoff
 
-For advanced queries, use the **Query Console** tab:
-
-- **"Ask in plain English"** — type a natural-language question (keyword-based
-  matching during the trial; see the full documentation for supported patterns)
-- **Direct SPARQL** — paste a SPARQL query directly against the knowledge graph
-
-### Other tabs
-
-- **Datasets** — full inventory with text search
-- **Entity Classes** — bar chart of CESDM class distribution across datasets
-- **Scenarios** — datasets grouped by scenario
+When you select a file larger than 200 MB in the Upload dialog, the browser
+cannot handle it. Click **Generate SDK upload snippet** to get a
+personalised `cesdh.upload_raw(...)` call pre-filled with the repository,
+branch, owner, title, description, and domain tags you already typed.
 
 ---
 
