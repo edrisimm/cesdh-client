@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: cesdh
+Version: 0.1.0
+Summary: Frictionless data access client for the Energy Systems Data Hub
+Requires-Python: >=3.9
+Requires-Dist: pandas
+Requires-Dist: h5py
+Requires-Dist: requests
+Requires-Dist: pyyaml
+Requires-Dist: openpyxl
+Requires-Dist: pyarrow

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupe-E Part 2: Modify &amp; Audit — ESDH Dashboard Guide</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES
+           =========================================== */
+        :root {
+            --stage-bg: #0c1222;
+            --slide-bg: #0c1222;
+            --pres-text: #e2e8f0;
+            --pres-muted: #8892b0;
+            --pres-dim: #5a6785;
+            --pres-accent: #64ffda;
+            --pres-amber: #ffd166;
+            --pres-pink: #ff7eb3;
+            --pres-blue: #a5d6ff;
+            --pres-green: #7ee787;
+            --pres-card-bg: #131c31;
+            --pres-border: #1e2d4a;
+            --pres-code-bg: #0a0f1c;
+
+            --d-deep: #f0f2f6;
+            --d-surface: #ffffff;
+            --d-card: #ffffff;
+            --d-hover: #e9eff7;
+            --d-accent: #215caf;
+            --d-warm: #08407e;
+            --d-soft: #007894;
+            --d-gold: #b8860b;
+            --d-text: #222222;
+            --d-text2: #555555;
+            --d-muted: #6f6f6f;
+            --d-ok: #627313;
+            --d-err: #b7352d;
+            --d-border: #d3deef;
+            --d-shadow: rgba(0,0,0,0.12);
+
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-dash: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+            --font-code: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+            --slide-padding: 72px;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* RESET */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* FIXED 16:9 STAGE */
+        html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--stage-bg); }
+        .deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg); }
+        .deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg); }
+        .slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg); }
+        .slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+        img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+
+        @media print {
+            html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+            .deck-viewport { position: static; overflow: visible; background: #fff; }
+            .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+            .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; }
+            .slide:last-child { break-after: auto; }
+            .deck-controls { display: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+        }
+
+        /* ANIMATIONS */
+        .reveal { opacity: 0; transform: translateY(20px); transition: opacity var(--duration-normal) var(--ease-out-expo), transform var(--duration-normal) var(--ease-out-expo); }
+        .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+        .reveal:nth-child(1) { transition-delay: 0.06s; }
+        .reveal:nth-child(2) { transition-delay: 0.14s; }
+        .reveal:nth-child(3) { transition-delay: 0.22s; }
+        .reveal:nth-child(4) { transition-delay: 0.30s; }
+
+        /* SLIDE LAYOUT */
+        .slide-inner { width: 100%; height: 100%; padding: var(--slide-padding); display: flex; flex-direction: column; position: relative; }
+        .slide::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--pres-accent) 0%, var(--pres-amber) 50%, var(--pres-pink) 100%); opacity: 0.6; }
+        h2 { font-family: var(--font-display); font-size: 48px; font-weight: 700; color: var(--pres-text); line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 6px; }
+        h2 .tag { font-family: var(--font-code); font-size: 20px; font-weight: 500; color: var(--pres-accent); display: block; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+        .sep { width: 70px; height: 3px; background: var(--pres-accent); border-radius: 2px; margin: 10px 0 14px; }
+        .slide-desc { font-family: var(--font-display); font-size: 23px; color: var(--pres-muted); line-height: 1.55; max-width: 780px; }
+        .slide-desc strong { color: var(--pres-text); font-weight: 600; }
+        .note { font-family: var(--font-display); font-size: 19px; color: var(--pres-dim); font-style: italic; margin-top: 10px; }
+        .note .hl { color: var(--pres-amber); font-style: normal; font-weight: 600; }
+        code { font-family: var(--font-code); font-size: 0.88em; background: var(--pres-code-bg); border: 1px solid var(--pres-border); border-radius: 4px; padding: 1px 7px; color: var(--pres-accent); }
+        .two-col { display: flex; gap: 36px; flex: 1; margin-top: 14px; }
+        .two-col > .col { flex: 1; min-width: 0; }
+        .two-col > .col-info { flex: 0 0 420px; min-width: 0; }
+        .two-col > .col-mock { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+        /* TITLE SLIDE */
+        .title-slide .slide-inner { justify-content: center; align-items: center; text-align: center; }
+        .title-slide::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(100,255,218,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(100,255,218,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
+        .title-slide h1 { font-family: var(--font-display); font-size: 68px; font-weight: 800; color: var(--pres-text); line-height: 1.12; letter-spacing: -1.5px; max-width: 1400px; }
+        .title-slide h1 .accent { color: var(--pres-accent); }
+        .title-slide .subtitle { font-family: var(--font-display); font-size: 30px; color: var(--pres-muted); margin-top: 20px; font-weight: 400; }
+        .title-slide .meta { font-family: var(--font-code); font-size: 18px; color: var(--pres-dim); margin-top: 40px; letter-spacing: 0.5px; }
+
+        /* DASHBOARD MOCKUP STYLES */
+        .mock { background: var(--d-deep); border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06); overflow: hidden; display: flex; flex-direction: column; font-family: var(--font-dash); color: var(--d-text); flex: 1; }
+        .mock-browser { height: 34px; background: #e8eaed; display: flex; align-items: center; padding: 0 12px; gap: 8px; border-bottom: 1px solid #d0d4d8; flex-shrink: 0; }
+        .mock-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .mock-dot.r { background: #ff5f57; }
+        .mock-dot.y { background: #febc2e; }
+        .mock-dot.g { background: #28c840; }
+        .mock-url { flex: 1; margin-left: 12px; background: #fff; border-radius: 4px; padding: 3px 10px; font-size: 12px; color: #888; font-family: var(--font-dash); border: 1px solid #d0d4d8; }
+        .mock-header { height: 48px; background: var(--d-surface); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--d-border); flex-shrink: 0; }
+        .mock-logo { font-size: 16px; font-weight: 700; color: var(--d-text); display: flex; align-items: center; gap: 6px; }
+        .mock-logo .bolt { font-size: 18px; }
+        .mock-user { font-size: 12px; color: var(--d-text2); }
+        .mock-user b { color: var(--d-text); }
+        .mock-tabs { display: flex; gap: 0; background: var(--d-surface); border-bottom: 2px solid var(--d-border); flex-shrink: 0; padding: 0 20px; }
+        .mock-tab { padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--d-muted); cursor: default; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+        .mock-tab.active { color: var(--d-accent); border-bottom-color: var(--d-accent); }
+        .mock-body { flex: 1; padding: 16px 20px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+        .mock-body-row { display: flex; gap: 14px; }
+        .mock-body-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .mock-body-drawer { flex: 0 0 210px; display: flex; flex-direction: column; gap: 10px; }
+        .mock-rel { position: relative; }
+
+        /* Form elements */
+        .m-label { font-size: 12px; font-weight: 600; color: var(--d-text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .m-input { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 5px; padding: 7px 10px; font-size: 13px; color: var(--d-text); font-family: var(--font-dash); width: 100%; }
+        .m-input.code { font-family: var(--font-code); font-size: 12px; background: #f8f9fb; }
+        .m-input.focus { border-color: var(--d-accent); box-shadow: 0 0 0 2px rgba(33,92,175,0.15); }
+        .m-select { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 5px; padding: 7px 10px; font-size: 13px; color: var(--d-text); font-family: var(--font-dash); width: 100%; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+        .m-btn { display: inline-flex; align-items: center; justify-content: center; padding: 7px 18px; border-radius: 5px; font-size: 13px; font-weight: 600; font-family: var(--font-dash); cursor: default; border: 1px solid var(--d-border); background: var(--d-surface); color: var(--d-text); }
+        .m-btn-primary { background: var(--d-accent); color: #fff; border-color: var(--d-accent); }
+        .m-row { display: flex; gap: 12px; align-items: flex-start; }
+        .m-group { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+        .m-group.half { flex: 0 0 48%; }
+        .m-section-title { font-size: 13px; font-weight: 700; color: var(--d-text); margin-top: 6px; margin-bottom: 2px; padding-bottom: 3px; border-bottom: 1px solid var(--d-border); }
+        .m-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+        .m-chip { display: inline-flex; align-items: center; gap: 4px; background: #e9eff7; border: 1px solid var(--d-border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--d-text2); white-space: nowrap; }
+        .m-chip .x { color: var(--d-muted); font-size: 12px; }
+        .m-chip.accent { background: rgba(33,92,175,0.1); border-color: rgba(33,92,175,0.3); color: var(--d-accent); font-weight: 500; }
+
+        /* Dataset cards */
+        .m-ds-card { background: var(--d-card); border: 1px solid var(--d-border); border-radius: 7px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+        .m-ds-head { display: flex; align-items: center; justify-content: space-between; }
+        .m-ds-badge { font-family: var(--font-code); font-size: 10px; font-weight: 500; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: #e9eff7; color: var(--d-accent); letter-spacing: 0.04em; }
+        .m-ds-badge.new { background: #eaf4e4; color: var(--d-ok); }
+        .m-ds-title { font-size: 14px; font-weight: 600; color: var(--d-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .m-ds-id { font-family: var(--font-code); font-size: 10px; color: var(--d-muted); }
+        .m-ds-desc { font-size: 12px; color: var(--d-text2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .m-ds-actions { display: flex; gap: 6px; font-size: 14px; opacity: 0.5; }
+        .m-ds-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--d-muted); border-top: 1px solid var(--d-border); padding-top: 6px; }
+
+        /* Table */
+        .m-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .m-table th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 600; color: var(--d-text2); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid var(--d-border); background: var(--d-surface); }
+        .m-table td { padding: 6px 8px; border-bottom: 1px solid var(--d-border); color: var(--d-text); vertical-align: top; }
+        .m-table .mono { font-family: var(--font-code); font-size: 11px; color: var(--d-muted); }
+        .m-table .rel-self { color: var(--d-accent); font-weight: 600; }
+        .m-table .rel-anc { color: var(--d-soft); font-weight: 500; }
+        .m-table .rel-new { color: var(--d-ok); font-weight: 600; }
+
+        /* Provenance highlight */
+        .prov-highlight { outline: 2px solid #ffd166; outline-offset: 2px; border-radius: 5px; position: relative; }
+        .prov-highlight::after { content: 'PROV-O'; position: absolute; top: -10px; right: 4px; font-family: var(--font-code); font-size: 9px; font-weight: 700; color: #ffd166; background: #3a2e00; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.5px; }
+
+        /* New-on-branch highlight (green glow) */
+        .branch-highlight { outline: 2px solid var(--pres-green); outline-offset: 2px; border-radius: 5px; position: relative; }
+        .branch-highlight::after { content: 'NEW ON BRANCH'; position: absolute; top: -10px; right: 4px; font-family: var(--font-code); font-size: 9px; font-weight: 700; color: var(--pres-green); background: #0d2818; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.5px; }
+
+        /* Info card */
+        .info-card { background: var(--pres-card-bg); border: 1px solid var(--pres-border); border-radius: 8px; padding: 16px 20px; }
+        .info-card h4 { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--pres-text); margin-bottom: 8px; }
+        .info-card p { font-family: var(--font-display); font-size: 19px; color: var(--pres-muted); line-height: 1.5; }
+
+        /* Callout annotations */
+        .callout { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--pres-accent); color: #0c1222; font-family: var(--font-display); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(100,255,218,0.4); z-index: 20; }
+        .callout-list { list-style: none; padding: 0; margin: 0; }
+        .callout-list li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-family: var(--font-display); font-size: 20px; color: var(--pres-muted); line-height: 1.45; }
+        .callout-list .num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--pres-accent); color: #0c1222; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+        /* Cards */
+        .card-row { display: flex; gap: 24px; }
+        .card { flex: 1; background: var(--pres-card-bg); border: 1px solid var(--pres-border); border-radius: 10px; padding: 24px 28px; }
+        .card h4 { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--pres-text); margin-bottom: 10px; }
+        .card p { font-family: var(--font-display); font-size: 21px; color: var(--pres-muted); line-height: 1.55; }
+
+        /* Diagram */
+        .diagram { font-family: var(--font-code); font-size: 20px; line-height: 1.6; color: var(--pres-muted); background: var(--pres-code-bg); border: 1px solid var(--pres-border); border-radius: 10px; padding: 22px 30px; white-space: pre; }
+        .diagram .folder { color: var(--pres-amber); font-weight: 500; }
+        .diagram .arrow { color: var(--pres-accent); }
+        .diagram .desc { color: var(--pres-dim); }
+        .diagram .new { color: var(--pres-green); font-weight: 500; }
+
+        /* Nudge */
+        .m-nudge { background: #fef9e7; border: 1px solid #f0e1a0; border-left: 3px solid #d4a80b; border-radius: 5px; padding: 8px 12px; font-size: 12px; color: #7a6000; }
+
+        /* Drawer */
+        .m-drawer-section { font-size: 11px; font-weight: 700; color: var(--d-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+        .m-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #627313; margin-right: 4px; }
+
+        /* Progress bar & counter */
+        .progress-bar { position: fixed; bottom: 0; left: 0; height: 3px; background: var(--pres-accent); transition: width 0.3s var(--ease-out-expo); z-index: 1001; }
+        .slide-counter { position: fixed; bottom: 24px; right: 32px; font-family: var(--font-code); font-size: 16px; color: var(--pres-dim); z-index: 1001; }
+
+        /* Phase label */
+        .phase-label { font-family: var(--font-code); font-size: 16px; color: var(--pres-accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+
+        /* Branch selector highlight */
+        .branch-select { border: 2px solid var(--pres-green) !important; background: #f0fff4 !important; }
+
+        /* File-drop */
+        .m-file-drop { background: var(--d-surface); border: 2px dashed var(--d-border); border-radius: 6px; padding: 14px; text-align: center; font-size: 13px; color: var(--d-muted); }
+        .m-file-drop .icon { font-size: 22px; margin-bottom: 4px; }
+        .m-file-drop .name { font-weight: 600; color: var(--d-accent); font-size: 13px; }
+
+        /* Dialog overlay */
+        .mock-dialog-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .mock-dialog { background: var(--d-surface); border-radius: 10px; box-shadow: 0 12px 48px rgba(0,0,0,0.25); width: 560px; max-height: 92%; overflow-y: auto; display: flex; flex-direction: column; }
+        .mock-dialog.wide { width: 680px; }
+        .mock-dialog-head { padding: 16px 20px 12px; font-size: 17px; font-weight: 700; color: var(--d-text); border-bottom: 1px solid var(--d-border); }
+        .mock-dialog-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow: hidden; }
+        .mock-dialog-foot { padding: 12px 20px; border-top: 1px solid var(--d-border); display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* Textarea */
+        .m-textarea { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 5px; padding: 7px 10px; font-size: 13px; color: var(--d-text); font-family: var(--font-dash); width: 100%; resize: none; }
+
+        /* Comparison columns (closing slide) */
+        .compare-col { flex: 1; }
+        .compare-col h3 { font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+        .compare-col ul { list-style: none; padding: 0; margin: 0; }
+        .compare-col ul li { font-family: var(--font-display); font-size: 20px; color: var(--pres-muted); line-height: 1.6; padding-left: 20px; position: relative; }
+        .compare-col ul li::before { content: ''; position: absolute; left: 0; top: 10px; width: 8px; height: 8px; border-radius: 50%; }
+        .compare-col.part1 ul li::before { background: var(--pres-accent); }
+        .compare-col.part2 ul li::before { background: var(--pres-amber); }
+    </style>
+</head>
+<body>
+    <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <!-- ============================================================
+                 SLIDE 1: TITLE
+                 ============================================================ -->
+            <section class="slide title-slide active" aria-label="Title">
+                <div class="slide-inner">
+                    <h1 class="reveal">Part 2: <span class="accent">Modify &amp; Audit</span><br>What happens when an<br>assumption changes?</h1>
+                    <p class="subtitle reveal">Branching, revising, and comparing data in the Semantic Lakehouse</p>
+                    <p class="meta reveal">Energy Systems Data Hub &middot; PROV-O Lineage &middot; Dashboard UI</p>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 2: THE SCENARIO
+                 ============================================================ -->
+            <section class="slide" aria-label="The scenario">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">The Scenario</span>Marie suspects costs are 15% too low</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">After Part 1, the <strong>groupe-e-planning-process</strong> repository holds 59 datasets on <code>main</code> with complete PROV-O lineage from raw inputs to publication figures.</p>
+                            <p class="slide-desc" style="margin-top:16px;">Marie wants to explore a <strong>sensitivity scenario</strong>: what if expansion costs are 15% higher than projected? She needs to revise the costs dataset without disturbing the published baseline.</p>
+                            <div class="info-card" style="margin-top:20px;">
+                                <h4 style="font-size:19px;">Three actions, one outcome</h4>
+                                <p style="font-size:17px;"><strong style="color:var(--pres-accent);">Branch</strong> &mdash; create a safe workspace.<br><strong style="color:var(--pres-amber);">Revise</strong> &mdash; upload modified costs with lineage.<br><strong style="color:var(--pres-pink);">Audit</strong> &mdash; compare both branches, trace provenance.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="diagram" style="font-size:17px; line-height:1.7;"><span class="folder">main</span> <span class="desc">(Part 1 baseline &mdash; untouched)</span>
+  <span class="arrow">|</span>
+  <span class="arrow">|</span>   <span class="desc">create_branch</span>
+  <span class="arrow">|</span>
+  <span class="arrow">+</span><span class="arrow">--------&gt;</span> <span class="new">sensitivity-2025</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>  <span class="desc">download costs</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>  <span class="desc">apply x1.15</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>  <span class="desc">upload revision</span>
+  <span class="arrow">|</span>           <span class="arrow">|</span>
+  <span class="arrow">|</span>           <span class="new">+1 revised dataset</span>
+  <span class="arrow">|</span>           <span class="new">owner: marie</span>
+  <span class="arrow">|</span>           <span class="new">derived_from: original costs</span>
+  <span class="arrow">|</span>
+  <span class="folder">main</span>  <span class="desc">59 datasets, owner: yaman</span>
+
+<span class="desc">   Phase 9: audit both branches side by side</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 3: PHASE 7 — VERIFY + BRANCH
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 7 - Verify and branch">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 7</span>Verify Part 1 state and create the branch</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">The script confirms the Part 1 repository exists, switches identity to <strong>Marie</strong>, searches for the target dataset, and creates a new branch.</p>
+                            <ul class="callout-list" style="margin-top:16px;">
+                                <li><span class="num">1</span><span><strong>Identity</strong> &mdash; switches to <code>marie</code> / <code>Marie Dupont</code>. All Part 2 provenance records are attributed to her.</span></li>
+                                <li><span class="num">2</span><span><strong>Search</strong> &mdash; finds the costs dataset on <code>main</code> to use as the revision target.</span></li>
+                                <li><span class="num">3</span><span><strong>Branch</strong> &mdash; creates <code>sensitivity-2025</code> from <code>main</code>. This inherits all 59 datasets without copying files.</span></li>
+                            </ul>
+                            <p class="note" style="margin-top:14px;">If the repository is missing, the script <span class="hl">aborts with a clear error</span> &mdash; it never recreates Part 1's state.</p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Marie Dupont</b> &middot; <span style="font-family:var(--font-code);font-size:11px;">marie</span></div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab active">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="font-size:12px;color:var(--d-text2);">Repositories &rsaquo; <b>groupe-e-planning-process</b></div>
+                                    <div class="mock-body-row" style="flex:1;">
+                                        <div class="mock-body-main" style="gap:8px;">
+                                            <div class="m-nudge">&#128100; Identity set to <b>marie</b> (Marie Dupont) for this session.</div>
+                                            <div style="font-size:13px;color:var(--d-text2);font-weight:600;">Branches</div>
+                                            <div class="m-ds-card" style="padding:10px 14px;">
+                                                <div class="m-ds-head">
+                                                    <div class="m-ds-title" style="font-size:13px;">&#9095; main</div>
+                                                    <span style="font-size:11px;color:var(--d-muted);">59 datasets</span>
+                                                </div>
+                                                <div class="m-ds-meta" style="border:none;padding:0;"><span>&#128100; yaman</span><span>Part 1 baseline</span></div>
+                                            </div>
+                                            <div class="m-ds-card branch-highlight" style="padding:10px 14px;">
+                                                <div class="m-ds-head">
+                                                    <div class="m-ds-title" style="font-size:13px;">&#9095; sensitivity-2025</div>
+                                                    <span class="m-ds-badge new">new</span>
+                                                </div>
+                                                <div class="m-ds-meta" style="border:none;padding:0;"><span>&#128100; marie</span><span>Created from main</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="mock-body-drawer">
+                                            <div class="m-drawer-section">Repository</div>
+                                            <div class="m-select" style="font-size:11px;padding:5px 8px;">groupe-e-planning-process</div>
+                                            <div class="m-drawer-section" style="margin-top:6px;">Branch</div>
+                                            <div class="m-select branch-select" style="font-size:11px;padding:5px 8px;">sensitivity-2025</div>
+                                            <div style="margin-top:auto;font-size:11px;color:var(--d-muted);"><span class="m-status-dot"></span> Platform online</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 4: PHASE 8 — DOWNLOAD
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 8a - Download">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 8</span>Download the costs dataset</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">The script searches for <code>expansion_costs</code>, then downloads the matching dataset to a local working directory.</p>
+                            <ul class="callout-list" style="margin-top:16px;">
+                                <li><span class="num">1</span><span><strong>Search</strong> &mdash; <code>cesdh.search("expansion_costs")</code> finds the dataset by name.</span></li>
+                                <li><span class="num">2</span><span><strong>Download</strong> &mdash; <code>cesdh.download_to_file()</code> streams the file to <code>./part2_workdir/</code>.</span></li>
+                                <li><span class="num">3</span><span><strong>Modify</strong> &mdash; loads the file into a DataFrame, multiplies all numeric columns by <strong>&times;1.15</strong>.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:16px;">
+                                <h4 style="font-size:19px;">Why download first?</h4>
+                                <p style="font-size:17px;">Marie revises <em>actual data</em> from the hub &mdash; not a separate local copy. This ensures the revision is based on exactly what was published.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Marie Dupont</b> &middot; marie</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab active">Discovering &amp; Searching</div>
+                                    <div class="mock-tab">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="font-size:12px;color:var(--d-text2);margin-bottom:4px;">Search results for <b>"expansion_costs"</b></div>
+                                    <div class="m-ds-card" style="border-left: 3px solid var(--d-accent);">
+                                        <div class="m-ds-head">
+                                            <div class="m-ds-badge">xlsx</div>
+                                            <div class="m-ds-actions">&#11015; &#128187; &#128279;</div>
+                                        </div>
+                                        <div class="m-ds-title">2024-04-30_expansion_costs.xlsx</div>
+                                        <div class="m-ds-id">dataset_gp_costs_7x8y9z...</div>
+                                        <div class="m-ds-desc">OGP2 grid-expansion costs (2024-04-30 run)</div>
+                                        <div class="m-chips"><span class="m-chip">OGP2</span><span class="m-chip">expansion</span><span class="m-chip">costs</span></div>
+                                        <div class="m-ds-meta">
+                                            <span>&#128100; yaman</span>
+                                            <span>&#128193; grid_planning_results</span>
+                                            <span>&#9095; main</span>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:8px;padding:10px 14px;background:var(--d-surface);border:1px solid var(--d-border);border-radius:6px;font-size:12px;color:var(--d-text2);">
+                                        <div style="font-weight:600;color:var(--d-text);margin-bottom:4px;">&#11015; Download</div>
+                                        Click the download icon to save the file locally. The SDK equivalent:<br>
+                                        <code style="font-size:11px;color:var(--d-accent);background:#f8f9fb;padding:2px 6px;border-radius:3px;margin-top:4px;display:inline-block;">cesdh.download_to_file(dataset_id, "./part2_workdir/", repository="groupe-e-planning-process")</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 5: PHASE 8 — UPLOAD REVISION
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 8b - Upload revision">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 8</span>Upload the revision with lineage</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">The modified costs file is uploaded to the <strong>sensitivity-2025</strong> branch with a <code>derived_from</code> link back to the original dataset.</p>
+                            <ul class="callout-list" style="margin-top:16px;">
+                                <li><span class="num">1</span><span><strong>Branch</strong> &mdash; the upload targets <code>sensitivity-2025</code>, not <code>main</code>. The baseline is never touched.</span></li>
+                                <li><span class="num">2</span><span><strong>derived_from</strong> &mdash; points to the original costs dataset. This creates a PROV-O lineage edge from revision to original.</span></li>
+                                <li><span class="num">3</span><span><strong>run_id</strong> &mdash; <code>sensitivity_rerun_2025</code> groups this upload under a named activity.</span></li>
+                            </ul>
+                            <p class="note" style="margin-top:14px;">This is the <span class="hl">same <code>upload()</code> call</span> used throughout Part 1 &mdash; only the branch and lineage arguments differ.</p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Marie Dupont</b> &middot; marie</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset <span style="font-size:13px;color:var(--d-muted);font-weight:400;margin-left:8px;">&#9095; sensitivity-2025</span></div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-file-drop" style="position:relative;">
+                                                    <div class="icon">&#128206;</div>
+                                                    <div class="name">2024-04-30_expansion_costs_sensitivity_1.15.xlsx</div>
+                                                    <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">1.9 MB &middot; revised (&times;1.15)</div>
+                                                </div>
+                                                <div class="m-row" style="position:relative;">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Branch</div>
+                                                        <div class="m-select branch-select" style="font-size:12px;">sensitivity-2025</div>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Folder</div>
+                                                        <div class="m-select">grid_planning_results</div>
+                                                    </div>
+                                                    <div class="callout" style="left:-16px;top:4px;">1</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Description</div>
+                                                    <textarea class="m-textarea" rows="1" readonly>Sensitivity revision of expansion_costs (&times;1.15 cost adjustment)</textarea>
+                                                </div>
+                                                <!-- PROVENANCE SECTION -->
+                                                <div class="prov-highlight" style="padding:10px 12px;border-top:1px solid var(--d-border);">
+                                                    <div class="m-section-title" style="margin-top:0;">&#128279; Provenance</div>
+                                                    <div class="m-group" style="position:relative;">
+                                                        <div class="m-label">Derived from</div>
+                                                        <div class="m-chips">
+                                                            <span class="m-chip accent">grid_planning_results &middot; 2024-04-30_expansion_costs.xlsx <span class="x">&times;</span></span>
+                                                        </div>
+                                                        <div class="callout" style="right:-16px;top:2px;">2</div>
+                                                    </div>
+                                                    <div class="m-group" style="margin-top:6px;position:relative;">
+                                                        <div class="m-label">Run ID</div>
+                                                        <input class="m-input code focus" value="sensitivity_rerun_2025" readonly>
+                                                        <div class="callout" style="right:-16px;top:4px;">3</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 6: PHASE 9a — WHAT CHANGED?
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 9a - Branch changes">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 9a</span>"What changed on the sensitivity branch?"</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc"><code>cesdh.get_branch_changes("sensitivity-2025")</code> returns every dataset that differs from <code>main</code>.</p>
+                            <div class="info-card" style="margin-top:18px;">
+                                <h4 style="font-size:19px;">One dataset diverges</h4>
+                                <p style="font-size:17px;">The revised costs file is the <strong style="color:var(--pres-green);">only difference</strong> between the two branches. All 59 original datasets remain identical on both.</p>
+                            </div>
+                            <p class="note" style="margin-top:14px;"><span class="hl">main is untouched</span> &mdash; Marie's revision exists only on <code>sensitivity-2025</code>. The published baseline is safe.</p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Marie Dupont</b> &middot; marie</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab active">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="font-size:12px;color:var(--d-text2);">Branch comparison &rsaquo; <b>sensitivity-2025</b> vs <b>main</b></div>
+                                    <table class="m-table" style="margin-top:6px;">
+                                        <thead>
+                                            <tr><th>Dataset</th><th>Status</th><th>Owner</th><th>Folder</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="branch-highlight" style="outline-offset:0;">
+                                                <td style="font-weight:600;">2024-04-30_expansion_costs_sensitivity_1.15.xlsx</td>
+                                                <td><span class="rel-new">ADDED</span></td>
+                                                <td class="mono">marie</td>
+                                                <td class="mono">grid_planning_results</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div style="margin-top:12px;padding:10px 14px;background:var(--d-surface);border:1px solid var(--d-border);border-radius:6px;">
+                                        <div style="font-size:12px;color:var(--d-text2);">
+                                            <strong style="color:var(--d-text);">Summary:</strong> 1 dataset added on <code style="font-size:11px;">sensitivity-2025</code>. 59 datasets unchanged from <code style="font-size:11px;">main</code>.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 7: PHASE 9b+c — LINEAGE + FILE HISTORY
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 9b - Lineage and file history">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 9b &amp; 9c</span>Trace lineage and compare file history</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc"><strong>9b.</strong> <code>get_lineage(revised_id, direction="ancestors")</code> walks the full chain from the revision back to the raw BFS/SOLKAT inputs.</p>
+                            <p class="slide-desc" style="margin-top:12px;"><strong>9c.</strong> <code>get_file_branches_history()</code> shows the same logical file on two branches &mdash; with different owners and content hashes.</p>
+                            <div class="info-card" style="margin-top:16px;">
+                                <h4 style="font-size:19px;">The provenance story</h4>
+                                <p style="font-size:17px;"><strong style="color:var(--pres-accent);">yaman</strong> created the baseline in 2024. <strong style="color:var(--pres-amber);">marie</strong> revised it in 2025. The hub recorded both without manual bookkeeping.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Marie Dupont</b> &middot; marie</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab">Working in a Repository</div>
+                                    <div class="mock-tab active">Lineage</div>
+                                </div>
+                                <div class="mock-body" style="gap:8px;">
+                                    <div style="font-size:11px;font-weight:600;color:var(--d-text2);text-transform:uppercase;letter-spacing:0.04em;">Ancestors of revised costs dataset</div>
+                                    <table class="m-table" style="font-size:11px;">
+                                        <thead>
+                                            <tr><th>Relationship</th><th>Dataset</th><th>Folder</th><th>Owner</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td class="rel-self">self</td><td style="font-weight:600;">expansion_costs_sensitivity_1.15.xlsx</td><td class="mono">grid_planning_results</td><td class="mono">marie</td></tr>
+                                            <tr><td class="rel-anc">ancestor</td><td>2024-04-30_expansion_costs.xlsx</td><td class="mono">grid_planning_results</td><td class="mono">yaman</td></tr>
+                                            <tr><td class="rel-anc">ancestor</td><td>region_FR_01.pckl</td><td class="mono">regionalization</td><td class="mono">yaman</td></tr>
+                                            <tr><td class="rel-anc">ancestor</td><td>input_BFS_HAK_EGID.csv</td><td class="mono">input_clean_data</td><td class="mono">yaman</td></tr>
+                                            <tr><td class="rel-anc">ancestor</td><td>BFS_VS_VD_FR_GE.xlsx</td><td class="mono">raw_input_data</td><td class="mono">yaman</td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div style="font-size:11px;font-weight:600;color:var(--d-text2);text-transform:uppercase;letter-spacing:0.04em;margin-top:4px;">File history across branches</div>
+                                    <table class="m-table" style="font-size:11px;">
+                                        <thead>
+                                            <tr><th>Branch</th><th>Owner</th><th>Content Hash</th><th>Size</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>main</td><td class="mono">yaman</td><td class="mono">a3f8c2e1...</td><td class="mono">1.8 MB</td></tr>
+                                            <tr style="background:#f0fff4;"><td style="font-weight:600;">sensitivity-2025</td><td class="mono" style="color:var(--d-ok);font-weight:600;">marie</td><td class="mono">7d2b91f4...</td><td class="mono">1.9 MB</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 8: COMPARISON — PART 1 vs PART 2
+                 ============================================================ -->
+            <section class="slide" aria-label="Part 1 vs Part 2 comparison">
+                <div class="slide-inner" style="justify-content: center;">
+                    <h2 class="reveal" style="text-align:center;"><span class="tag">The Full Lifecycle</span>Part 1 + Part 2</h2>
+                    <div class="sep reveal" style="margin:10px auto 24px;"></div>
+                    <div class="card-row reveal" style="margin-bottom:28px;">
+                        <div class="card compare-col part1" style="border-top:3px solid var(--pres-accent);">
+                            <h3 style="color:var(--pres-accent);">Part 1 &mdash; Bootstrap</h3>
+                            <ul>
+                                <li>Create the repository</li>
+                                <li>Upload 59 datasets across 5 folders</li>
+                                <li>Build complete PROV-O lineage chain</li>
+                                <li>Search and audit on a single branch</li>
+                                <li>Owner: <strong style="color:var(--pres-text);">yaman</strong></li>
+                            </ul>
+                        </div>
+                        <div class="card compare-col part2" style="border-top:3px solid var(--pres-amber);">
+                            <h3 style="color:var(--pres-amber);">Part 2 &mdash; Modify &amp; Audit</h3>
+                            <ul>
+                                <li>Branch for safe what-if exploration</li>
+                                <li>Download, revise, and re-upload 1 dataset</li>
+                                <li>Extend lineage with <code>derived_from</code></li>
+                                <li>Audit across branches with full attribution</li>
+                                <li>Owner: <strong style="color:var(--pres-text);">marie</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-row reveal">
+                        <div class="card" style="border-top:3px solid var(--pres-accent); text-align:left;">
+                            <h4 style="color:var(--pres-accent); font-size:22px;">1. Safe what-if exploration</h4>
+                            <p style="font-size:18px;">Branch off the published baseline, revise assumptions, and upload results &mdash; zero risk of corrupting the original data.</p>
+                        </div>
+                        <div class="card" style="border-top:3px solid var(--pres-amber); text-align:left;">
+                            <h4 style="color:var(--pres-amber); font-size:22px;">2. Automatic provenance across revisions</h4>
+                            <p style="font-size:18px;">The revised dataset is linked to the original via PROV-O. The full chain is queryable from revision to raw input, across branches.</p>
+                        </div>
+                        <div class="card" style="border-top:3px solid var(--pres-pink); text-align:left;">
+                            <h4 style="color:var(--pres-pink); font-size:22px;">3. Multi-user attribution</h4>
+                            <p style="font-size:18px;">Two researchers, two branches, two content hashes. The hub records who changed what without manual bookkeeping.</p>
+                        </div>
+                    </div>
+                    <p class="reveal" style="margin-top:28px; font-family:var(--font-code); font-size:16px; color:var(--pres-dim); text-align:center;">
+                        Energy Systems Data Hub &middot; PROV-O Lineage &middot; Dashboard UI
+                    </p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- === PROGRESS BAR === -->
+    <div class="progress-bar" id="progressBar"></div>
+    <!-- === SLIDE COUNTER === -->
+    <div class="slide-counter" id="slideCounter"></div>
+
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.stage = document.getElementById('deckStage');
+                this.progressBar = document.getElementById('progressBar');
+                this.slideCounter = document.getElementById('slideCounter');
+                this.isAnimating = false;
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.showSlide(0);
+            }
+            setupStageScale() {
+                const scale = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                scale();
+                window.addEventListener('resize', scale);
+            }
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+                    switch (e.key) {
+                        case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                            e.preventDefault(); this.next(); break;
+                        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                            e.preventDefault(); this.prev(); break;
+                        case 'Home': e.preventDefault(); this.showSlide(0); break;
+                        case 'End': e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+                    }
+                });
+            }
+            setupTouchNav() {
+                let startX = 0, startY = 0;
+                this.stage.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+                }, { passive: true });
+                this.stage.addEventListener('touchend', (e) => {
+                    const dx = e.changedTouches[0].clientX - startX;
+                    const dy = e.changedTouches[0].clientY - startY;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                        dx < 0 ? this.next() : this.prev();
+                    }
+                }, { passive: true });
+            }
+            setupWheelNav() {
+                let lastWheel = 0;
+                document.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const now = Date.now();
+                    if (now - lastWheel < 600) return;
+                    lastWheel = now;
+                    e.deltaY > 0 ? this.next() : this.prev();
+                }, { passive: false });
+            }
+            showSlide(index) {
+                if (this.isAnimating) return;
+                const target = Math.max(0, Math.min(index, this.slides.length - 1));
+                if (target === this.currentSlide && this.slides[target].classList.contains('visible')) return;
+                this.isAnimating = true;
+                this.slides.forEach((s) => s.classList.remove('active', 'visible'));
+                this.currentSlide = target;
+                const slide = this.slides[target];
+                slide.classList.add('active');
+                requestAnimationFrame(() => {
+                    slide.classList.add('visible');
+                    this.isAnimating = false;
+                });
+                const pct = ((target + 1) / this.slides.length) * 100;
+                this.progressBar.style.width = pct + '%';
+                this.slideCounter.textContent = `${target + 1} / ${this.slides.length}`;
+            }
+            next() { this.showSlide(this.currentSlide + 1); }
+            prev() { this.showSlide(this.currentSlide - 1); }
+        }
+        new SlidePresentation();
+    </script>
+</body>
+</html>

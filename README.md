@@ -469,6 +469,8 @@ Sample data files are bundled under `data/`.
 | `multi_researcher_cesdm_workflow.py` | Two-researcher handoff: A curates raw data, B builds a CESDM scenario and sub-scenario delta, then lineage traces back to A's inputs. |
 | `project_tutorial_ch_neighbours.py` | Builds the CESDM "Switzerland + neighbours" 5-country model, exports in 7 formats, uploads all artifacts, and verifies the round-trip. |
 | `fen_general_repository_linking.py` | Zero-copy cross-repository linking: a shared repository holds raw data once, two consumer projects reference it via link manifests. |
+| `groupe_e_planning_process_provisioning.py` | Provisions a full Groupe-E grid-planning pipeline with complete PROV-O lineage from raw inputs to publication figures, then demonstrates `get_lineage` and `get_pipeline`. |
+| `groupe_e_planning_process_provisioning_part2.py` | Part 2: creates a sensitivity branch, downloads and revises a dataset, re-uploads with lineage, and audits the divergence between baseline and revision. |
 
 Run any of them from the `cesdh-client/` directory:
 

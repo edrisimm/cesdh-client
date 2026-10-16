@@ -1,17 +1,93 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
-import tempfile
-import zipfile
+import re
+import time
 from typing import List, Optional
 
 import pandas as pd
 import requests
 
+logger = logging.getLogger("cesdh")
+
+# Subpath validation (inlined from src/ingestion/uploader.py so the client
+# package does not depend on the gateway source tree).
+_SUBPATH_SEGMENT_RE = re.compile(r"^[A-Za-z0-9_\-\.]+$")
+_SUBPATH_MAX_LEN = 512
+
+
+def _validate_subpath(subpath: str) -> str:
+    """Validate and return a normalized subpath, or raise ValueError.
+
+    A subpath is a ``/``-separated sequence of segments where each segment
+    matches ``[A-Za-z0-9_\\-\\.]+``.  The empty string is always valid and
+    means "no subfolder" (today's default).  Leading/trailing slashes, empty
+    segments (``//``), ``..`` traversal, and lengths above 512 characters are
+    rejected.
+    """
+    if not subpath:
+        return ""
+    if len(subpath) > _SUBPATH_MAX_LEN:
+        raise ValueError(f"subpath exceeds {_SUBPATH_MAX_LEN} characters")
+    if subpath.startswith("/") or subpath.endswith("/"):
+        raise ValueError("subpath must not start or end with '/'")
+    segments = subpath.split("/")
+    for seg in segments:
+        if not seg:
+            raise ValueError("subpath contains empty segment (consecutive slashes)")
+        if seg == "..":
+            raise ValueError("subpath must not contain '..' segments")
+        if not _SUBPATH_SEGMENT_RE.match(seg):
+            raise ValueError(
+                f"subpath segment {seg!r} contains invalid characters "
+                f"(allowed: letters, digits, underscore, dash, dot)"
+            )
+    return subpath
+
+
+class CloneResult(list):
+    """Return type for :meth:`clone_branch` — a ``list[str]`` of local paths.
+
+    Extends ``list`` so existing callers (``for p in result:``,
+    ``len(result)``, ``result[0]``) work unchanged.  Adds a ``.failures``
+    attribute carrying metadata about files that could not be downloaded.
+
+    Each failure is a dict with keys ``dataset_id``, ``file_name``, and
+    ``error`` (the stringified exception).
+    """
+
+    def __init__(
+        self,
+        paths: List[str],
+        failures: Optional[List[dict]] = None,
+    ) -> None:
+        super().__init__(paths)
+        self.failures: List[dict] = failures or []
+
 
 class CesDHQueryError(RuntimeError):
     """Raised when a high-level SDK query method fails."""
+
+
+class CesDHConflictError(RuntimeError):
+    """Raised when the gateway returns 409 but the SPARQL lookup finds no active
+    catalog row for the conflict key — indicates a platform inconsistency.
+
+    Attributes:
+        repository: the target repository.
+        branch: the target branch.
+        filename: the uploaded filename.
+    """
+
+    def __init__(
+        self, message: str, repository: str, branch: str, filename: str
+    ) -> None:
+        super().__init__(message)
+        self.repository = repository
+        self.branch = branch
+        self.filename = filename
 
 
 class EnergyDLMClient:
@@ -75,8 +151,11 @@ class EnergyDLMClient:
         scenario_ids: str | list[str] | None = None,
         commit_message: str | None = None,
         dcat_metadata: dict | None = None,
+        subpath: str = "",
     ) -> dict:
         import json
+
+        subpath = _validate_subpath(subpath)
 
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f)}
@@ -88,6 +167,8 @@ class EnergyDLMClient:
                 "force": str(force).lower(),
                 "allow_direct_main": str(allow_direct_main).lower(),
             }
+            if subpath:
+                data["subpath"] = subpath
             if scenario_metadata:
                 data["scenario_metadata"] = json.dumps(scenario_metadata)
             if derived_from:
@@ -402,6 +483,50 @@ class EnergyDLMClient:
         resp.raise_for_status()
         return resp.content
 
+    def _download_file_by_id(
+        self,
+        dataset_id: str,
+        dest_path: str,
+    ) -> str:
+        """Download a dataset file directly to *dest_path* (full file path).
+
+        Unlike :meth:`download_to_file` this skips the ``/resolve`` round-trip
+        because the caller already knows the target filename.  Returns
+        *dest_path* on success.
+        """
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        with requests.get(
+            f"{self.gateway_url}/datasets/{dataset_id}/download",
+            headers=self._repo_headers(),
+            timeout=300,
+            stream=True,
+        ) as resp:
+            resp.raise_for_status()
+            with open(dest_path, "wb") as fh:
+                fh.writelines(resp.iter_content(chunk_size=8 * 1024 * 1024))
+        return dest_path
+
+    # SPARQL used by clone_branch to enumerate datasets.  Mirrors the query in
+    # src/gateway/routers/clone.py (lines 129-145) but runs through the
+    # gateway's /search/sparql endpoint so inject_repo_filter still applies.
+    _CLONE_ENUMERATE_SPARQL = """\
+PREFIX dcat:    <http://www.w3.org/ns/dcat#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX energy:  <http://energy.ethz.ch/schema#>
+
+SELECT ?dataset_id ?file_name ?storedIn WHERE {{
+  GRAPH <http://energy.ethz.ch/graph/catalog> {{
+    ?dataset a dcat:Dataset ;
+             dcterms:identifier ?dataset_id ;
+             energy:fileName ?file_name ;
+             energy:lakefsBranch "{branch}" ;
+             energy:storedIn ?storedIn .
+    {superseded_filter}
+    {tier_filter}
+  }}
+}}
+ORDER BY ?dataset_id"""
+
     def clone_branch(
         self,
         branch: str,
@@ -409,13 +534,19 @@ class EnergyDLMClient:
         *,
         tier: Optional[str] = None,
         include_superseded: bool = False,
-    ) -> List[str]:
-        """Download every active dataset on branch to disk under destination.
+        progress: bool = True,
+        max_retries: int = 3,
+    ) -> CloneResult:
+        """Download every active dataset on *branch* to disk under *destination*.
 
-        Preserves the storage hierarchy (tier/dataset_id/filename) under the
-        destination directory. If ``tier`` is supplied, restricts the clone to
-        that tier (raw|transformed|analytics). Returns the list of resolved
-        local paths in tier/dataset_id/filename order.
+        Preserves the storage hierarchy (``tier/dataset_id/filename``) under the
+        destination directory.  If ``tier`` is supplied, restricts the clone to
+        that tier (``raw`` | ``transformed`` | ``analytics``).
+
+        Each file is downloaded independently.  A failure on one file does not
+        abort the clone — the SDK logs the failure, skips that file, and
+        continues.  Transient errors (network hiccups, gateway cold-starts) are
+        retried up to *max_retries* times with exponential backoff.
 
         Git-like semantics:
           - The clone is a snapshot of the branch's HEAD commit.
@@ -423,12 +554,41 @@ class EnergyDLMClient:
           - Re-cloning at the same HEAD returns identical files.
           - The branch is not modified; no commit is created.
 
-        Raises:
-            requests.HTTPError: on non-2xx gateway responses.
-            requests.exceptions.ConnectionError: if the gateway is unreachable.
-            RuntimeError: if the ZIP stream is malformed or contains no entries.
-            ValueError: if tier is not one of raw/transformed/analytics/None,
-                or if branch or destination are invalid.
+        On macOS system Python (which ships with LibreSSL 2.8.3), urllib3 v2
+        raises ``NotOpenSSLWarning`` and may cause ``RemoteDisconnected``
+        mid-response.  The per-file approach used by this function is naturally
+        resilient because each download is a small, independent HTTP request.
+        If you see ``RemoteDisconnected`` errors, run
+        ``pip install 'urllib3<2'``.
+
+        Parameters
+        ----------
+        branch : str
+            LakeFS branch to clone.
+        destination : str
+            Local directory to write files into.
+        tier : str, optional
+            Restrict to ``"raw"`` / ``"transformed"`` / ``"analytics"``.
+        include_superseded : bool
+            Include datasets marked as superseded (default ``False``).
+        progress : bool
+            Print ``downloaded N/M: filename`` lines to stdout (default ``True``).
+        max_retries : int
+            Per-file retry count with exponential backoff (default ``3``).
+
+        Returns
+        -------
+        CloneResult
+            A ``list[str]`` of successfully downloaded absolute paths.
+            ``result.failures`` carries metadata about files that could not
+            be downloaded after all retries.
+
+        Raises
+        ------
+        requests.HTTPError
+            On non-2xx gateway responses during the catalog query.
+        ValueError
+            If *tier*, *branch*, or *destination* are invalid.
         """
         # Validate inputs
         branch = self._safe_id(branch, "branch")
@@ -444,62 +604,96 @@ class EnergyDLMClient:
         if not destination or not isinstance(destination, str):
             raise ValueError("destination must be a non-empty string path")
 
-        # POST to the clone endpoint
-        body: dict = {"include_superseded": include_superseded}
-        if tier is not None:
-            body["tier"] = tier
+        # Enumerate datasets via SPARQL (one round-trip)
+        superseded_filter = (
+            ""
+            if include_superseded
+            else "FILTER NOT EXISTS { ?dataset energy:supersededBy ?newer . }"
+        )
+        tier_filter = ""
+        if tier:
+            tier_filter = (
+                f'FILTER(CONTAINS(STR(?storedIn), "/{tier}/"))'
+            )
 
-        with requests.post(
-            f"{self.gateway_url}/repos/{self.repository}/branches/{branch}/clone",
-            json=body,
-            headers=self._repo_headers(),
-            timeout=600,
-            stream=True,
-        ) as resp:
-            resp.raise_for_status()
+        def _esc(value: str) -> str:
+            return value.replace("\\", "\\\\").replace('"', '\\"')
 
-            # Stream to a temp file
-            tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
-            tmp_path = tmp.name
-            try:
-                for chunk in resp.iter_content(chunk_size=8 * 1024 * 1024):
-                    if chunk:
-                        tmp.write(chunk)
-                tmp.close()
+        query = self._CLONE_ENUMERATE_SPARQL.format(
+            branch=_esc(branch),
+            superseded_filter=superseded_filter,
+            tier_filter=tier_filter,
+        )
+        raw = self.sparql(query)
+        datasets = raw.get("results", [])
 
-                # Extract the ZIP
-                os.makedirs(destination, exist_ok=True)
-                extracted: List[str] = []
+        total = len(datasets)
+        if total == 0:
+            return CloneResult([])
 
-                with zipfile.ZipFile(tmp_path, "r") as zf:
-                    for member in zf.infolist():
-                        if member.is_dir():
-                            continue
-                        # Security: reject path-traversal entries
-                        if ".." in member.filename or member.filename.startswith("/"):
-                            continue
-                        target = os.path.join(destination, member.filename)
-                        os.makedirs(os.path.dirname(target), exist_ok=True)
-                        with zf.open(member) as src, open(target, "wb") as dst:
-                            while True:
-                                chunk = src.read(8 * 1024 * 1024)
-                                if not chunk:
-                                    break
-                                dst.write(chunk)
-                        extracted.append(os.path.abspath(target))
+        # Per-file download with retry
+        os.makedirs(destination, exist_ok=True)
+        paths: List[str] = []
+        failures: List[dict] = []
 
-                extracted.sort()
-                return extracted
+        for i, ds in enumerate(datasets, 1):
+            dataset_id = ds.get("dataset_id", "")
+            file_name = ds.get("file_name", dataset_id)
+            stored_in = ds.get("storedIn", "")
 
-            except zipfile.BadZipFile as exc:
-                raise RuntimeError(
-                    f"Gateway returned a malformed ZIP for {self.repository}/{branch}: {exc}"
-                ) from exc
-            finally:
+            # Derive the relative path from the LakeFS URI.
+            # storedIn looks like lakefs://repo/branch/raw/dataset_id/file.csv
+            # We want raw/dataset_id/file.csv as the local sub-path.
+            rel_path = ""
+            if stored_in:
+                parts = stored_in.replace("lakefs://", "").split("/", 2)
+                if len(parts) >= 3:
+                    rel_path = parts[2]  # raw/dataset_id/file.csv
+
+            if not rel_path:
+                # Fallback: dataset_id/file_name
+                rel_path = f"{dataset_id}/{file_name}"
+
+            # Security: reject path traversal
+            if ".." in rel_path or rel_path.startswith("/"):
+                logger.warning(
+                    "Skipping path-traversal entry: %s", rel_path
+                )
+                continue
+
+            dest_path = os.path.join(destination, rel_path)
+
+            ok = False
+            last_exc: Optional[Exception] = None
+            for attempt in range(max_retries):
                 try:
-                    os.unlink(tmp_path)
-                except OSError:
-                    pass
+                    self._download_file_by_id(dataset_id, dest_path)
+                    ok = True
+                    break
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt)  # 1s, 2s, 4s …
+
+            if ok:
+                paths.append(os.path.abspath(dest_path))
+            else:
+                logger.warning(
+                    "Failed to download %s (%s) after %d attempts: %s",
+                    dataset_id, file_name, max_retries, last_exc,
+                )
+                failures.append({
+                    "dataset_id": dataset_id,
+                    "file_name": file_name,
+                    "error": str(last_exc),
+                })
+
+            if progress:
+                status = "ok" if ok else "FAILED"
+                print(f"downloaded {i}/{total}: {file_name} [{status}]")
+
+        paths.sort()
+        return CloneResult(paths, failures)
 
     # ------------------------------------------------------------------ #
     # Search
@@ -749,6 +943,7 @@ class EnergyDLMClient:
         entity_class: str | None = None,
         scenario: str | None = None,
         limit: int = 100,
+        subpath: str | None = None,
     ) -> list:
         """Return DatasetSummary list from GET /catalog/datasets with optional facet params."""
         params: dict = {"limit": limit}
@@ -760,6 +955,8 @@ class EnergyDLMClient:
             params["entity_class"] = entity_class
         if scenario:
             params["scenario"] = scenario
+        if subpath is not None:
+            params["subpath"] = subpath
         resp = requests.get(
             f"{self.gateway_url}/catalog/datasets",
             params=params,
@@ -1354,3 +1551,154 @@ SELECT ?datasetId WHERE {{
 
         keep_mask = df["path"].map(lambda p: path_to_id.get(p) not in superseded_ids)
         return df[keep_mask].reset_index(drop=True)
+
+    # ------------------------------------------------------------------ #
+    # Lineage helpers
+    # ------------------------------------------------------------------ #
+
+    def get_lineage(
+        self,
+        dataset_id: str,
+        *,
+        direction: str = "both",
+        include_self: bool = True,
+        max_depth: Optional[int] = None,
+        timeout: int = 60,
+    ) -> pd.DataFrame:
+        """Return ancestors and descendants of a dataset as a DataFrame.
+
+        Queries the gateway's ``GET /datasets/{dataset_id}/lineage`` route,
+        which traverses ``prov:wasDerivedFrom`` in Fuseki.
+
+        When ``max_depth`` is ``None`` (default), the full transitive closure
+        is returned (backward compatible).  When set to an integer >= 1,
+        only datasets within that many derivation hops are included — e.g.
+        ``max_depth=1`` returns direct ancestors/descendants only.
+
+        Columns: dataset_id, relationship, title, subpath, branch,
+                 run_id, run_label.
+
+        ``relationship`` is one of ``"self"``, ``"ancestor"``, ``"descendant"``.
+
+        Parameters
+        ----------
+        dataset_id:
+            Dataset to trace lineage for.
+        direction:
+            ``"both"`` (default), ``"ancestors"``, or ``"descendants"``.
+        include_self:
+            Whether to include the focus dataset itself (default True).
+        max_depth:
+            Maximum number of derivation hops (default ``None`` = unbounded).
+            Must be >= 1 when set.
+        timeout:
+            HTTP read timeout in seconds (default 60).
+
+        Raises
+        ------
+        ValueError
+            If ``max_depth`` is < 1.
+        CesDHQueryError
+            On gateway or Fuseki failure.
+        """
+        safe_id = self._safe_id(dataset_id, "dataset_id")
+        if direction not in ("both", "ancestors", "descendants"):
+            raise ValueError(
+                f"'direction' must be 'both', 'ancestors', or 'descendants' "
+                f"(got {direction!r})"
+            )
+        if max_depth is not None and max_depth < 1:
+            raise ValueError(
+                f"'max_depth' must be >= 1 or None (got {max_depth!r})"
+            )
+        _COLUMNS = [
+            "dataset_id", "relationship", "title", "subpath",
+            "branch", "run_id", "run_label",
+        ]
+        params: dict = {
+            "direction": direction,
+            "include_self": str(include_self).lower(),
+        }
+        if max_depth is not None:
+            params["max_depth"] = str(max_depth)
+        try:
+            resp = requests.get(
+                f"{self.gateway_url}/datasets/{safe_id}/lineage",
+                params=params,
+                headers=self._repo_headers(),
+                timeout=timeout,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except (requests.HTTPError, KeyError, ValueError) as exc:
+            raise CesDHQueryError(
+                f"get_lineage failed for '{dataset_id}': {exc}"
+            ) from exc
+
+        rows = data.get("rows", [])
+        if not rows:
+            return pd.DataFrame(columns=_COLUMNS)
+
+        records = [
+            {
+                "dataset_id": r.get("dataset_id", ""),
+                "relationship": r.get("relationship", ""),
+                "title": r.get("title", ""),
+                "subpath": r.get("subpath"),
+                "branch": r.get("branch", ""),
+                "run_id": r.get("run_id"),
+                "run_label": r.get("run_label"),
+            }
+            for r in rows
+        ]
+        return pd.DataFrame(records)[_COLUMNS]
+
+    def get_pipeline(self, branch: str = "main") -> pd.DataFrame:
+        """Return all (parent → child) derivation edges on a branch.
+
+        Queries the gateway's ``GET /repos/{repo}/branches/{branch}/pipeline``
+        route. Each row is a single ``prov:wasDerivedFrom`` edge.
+
+        Columns: source_id, source_title, source_subpath,
+                 target_id, target_title, target_subpath.
+
+        Raises
+        ------
+        CesDHQueryError
+            On gateway or Fuseki failure.
+        """
+        safe_branch = self._safe_id(branch, "branch")
+        _COLUMNS = [
+            "source_id", "source_title", "source_subpath",
+            "target_id", "target_title", "target_subpath",
+        ]
+        try:
+            resp = requests.get(
+                f"{self.gateway_url}/repos/{self.repository}"
+                f"/branches/{safe_branch}/pipeline",
+                headers=self._repo_headers(),
+                timeout=60,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except (requests.HTTPError, KeyError, ValueError) as exc:
+            raise CesDHQueryError(
+                f"get_pipeline failed for branch '{branch}': {exc}"
+            ) from exc
+
+        edges = data.get("edges", [])
+        if not edges:
+            return pd.DataFrame(columns=_COLUMNS)
+
+        records = [
+            {
+                "source_id": e.get("source_id", ""),
+                "source_title": e.get("source_title", ""),
+                "source_subpath": e.get("source_subpath"),
+                "target_id": e.get("target_id", ""),
+                "target_title": e.get("target_title", ""),
+                "target_subpath": e.get("target_subpath"),
+            }
+            for e in edges
+        ]
+        return pd.DataFrame(records)[_COLUMNS]

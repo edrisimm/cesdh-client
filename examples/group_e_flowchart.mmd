@@ -1,0 +1,31 @@
+flowchart TD
+    %% Raw Data Inputs
+    R1[("Raw BFS file (EGID list)")] --> QD1["DataCleaning"]
+    R2[("Raw SOLKAT (solar potential list per EGID)")] --> QD2["DataCleaning"]
+
+    %% Cleaned Data Outputs
+    QD1 --> QR1[("Input BFS")]
+    QD2 --> QR2[("Input PV")]
+
+    %% Processing & Regionalization
+    QR1 --> PcklR["regionalization and time-series creation"]
+    QR2 --> PcklR
+    IR3[("Input scenarios")] --> PcklR
+
+    %% Pickl creation
+    PcklR --> Pckl1[("PCKL time series")]
+
+    %% Grid Planning Analysis
+    Pckl1 --> GP["Grid planning analysis"]
+
+    %% Analysis Outputs
+    GP --> OGP1[("2024-04-30_expansion_results")]
+    GP --> OGP2[("2024-04-30_expansion_cost")]
+
+    %% Publications
+    OGP1 --> PU["Grid Planning Publication"]
+    OGP2 --> PU
+
+    %% Figures
+    PU --> F1("Figure_1 expansion_results")
+    PU --> F2("Figure_2 expansion_cost")

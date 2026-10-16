@@ -14,6 +14,10 @@ dependencies = [
     # download_to_dataframe(file_type="yaml") imports yaml lazily (client.py).
     # Without this a clean install fails at first use on any YAML dataset.
     "pyyaml",
+    # Excel (.xlsx) support for pd.read_excel() after download_to_file().
+    "openpyxl",
+    # Parquet support for pd.read_parquet() after download_to_file().
+    "pyarrow",
 ]
 
 # Map the package name "cesdh" to this directory (src/sdk/) so that

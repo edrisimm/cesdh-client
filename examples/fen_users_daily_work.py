@@ -241,7 +241,7 @@ def _upload_and_record(
 ) -> DatasetRecord:
     """Upload a file and return a DatasetRecord. Reduces per-upload boilerplate."""
     file_sha = sha256_file(file_path)
-    result = cesdh.upload_raw(
+    result = cesdh.upload(
         str(file_path),
         owner=owner,
         repository=cfg_repo,

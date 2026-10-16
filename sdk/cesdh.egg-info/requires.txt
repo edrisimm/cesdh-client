@@ -1,0 +1,6 @@
+pandas
+h5py
+requests
+pyyaml
+openpyxl
+pyarrow

@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replicating the Groupe-E Provisioning Example — ESDH Dashboard Guide</title>
+
+    <!-- Fonts: Source Sans 3 (close to DINPro), JetBrains Mono for code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES
+           Presentation shell: dark
+           Dashboard mockups: ETH Design System light
+           =========================================== */
+        :root {
+            --stage-bg: #0c1222;
+            --slide-bg: #0c1222;
+
+            /* Presentation chrome */
+            --pres-text: #e2e8f0;
+            --pres-muted: #8892b0;
+            --pres-dim: #5a6785;
+            --pres-accent: #64ffda;
+            --pres-amber: #ffd166;
+            --pres-pink: #ff7eb3;
+            --pres-blue: #a5d6ff;
+            --pres-green: #7ee787;
+            --pres-card-bg: #131c31;
+            --pres-border: #1e2d4a;
+            --pres-code-bg: #0a0f1c;
+
+            /* ETH Dashboard palette (light) */
+            --d-deep: #f0f2f6;
+            --d-surface: #ffffff;
+            --d-card: #ffffff;
+            --d-hover: #e9eff7;
+            --d-accent: #215caf;
+            --d-warm: #08407e;
+            --d-soft: #007894;
+            --d-gold: #b8860b;
+            --d-text: #222222;
+            --d-text2: #555555;
+            --d-muted: #6f6f6f;
+            --d-ok: #627313;
+            --d-err: #b7352d;
+            --d-border: #d3deef;
+            --d-shadow: rgba(0,0,0,0.12);
+
+            /* Typography */
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-dash: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+            --font-code: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+            /* Slide chrome sizes (at 1920x1080) */
+            --slide-padding: 72px;
+
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* ===========================================
+           RESET
+           =========================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===========================================
+           FIXED 16:9 STAGE: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            width: 100%; height: 100%; margin: 0;
+            overflow: hidden; background: var(--stage-bg, #000);
+        }
+        .deck-viewport {
+            position: fixed; inset: 0; overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+        .deck-stage {
+            position: absolute; left: 0; top: 0;
+            width: 1920px; height: 1080px; overflow: hidden;
+            transform-origin: 0 0; background: var(--slide-bg, #fff);
+        }
+        .slide {
+            position: absolute; inset: 0;
+            width: 1920px; height: 1080px; overflow: hidden;
+            display: block; visibility: hidden; opacity: 0; pointer-events: none;
+            background: var(--slide-bg, #fff);
+        }
+        .slide.active, .slide.visible {
+            visibility: visible; opacity: 1; pointer-events: auto; z-index: 1;
+        }
+        img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+        .deck-controls {
+            position: fixed; left: 50%; bottom: 22px;
+            transform: translateX(-50%); z-index: 1000;
+        }
+        @media print {
+            html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+            .deck-viewport { position: static; overflow: visible; background: #fff; }
+            .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+            .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+            .slide:last-child { break-after: auto; page-break-after: auto; }
+            .deck-controls { display: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+        .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+        .reveal:nth-child(1) { transition-delay: 0.06s; }
+        .reveal:nth-child(2) { transition-delay: 0.14s; }
+        .reveal:nth-child(3) { transition-delay: 0.22s; }
+        .reveal:nth-child(4) { transition-delay: 0.30s; }
+
+        /* ===========================================
+           SLIDE LAYOUT HELPERS
+           =========================================== */
+        .slide-inner {
+            width: 100%; height: 100%;
+            padding: var(--slide-padding);
+            display: flex; flex-direction: column;
+            position: relative;
+        }
+        .slide::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--pres-accent) 0%, var(--pres-amber) 50%, var(--pres-pink) 100%);
+            opacity: 0.6;
+        }
+        h2 {
+            font-family: var(--font-display); font-size: 48px; font-weight: 700;
+            color: var(--pres-text); line-height: 1.15; letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        h2 .tag {
+            font-family: var(--font-code); font-size: 20px; font-weight: 500;
+            color: var(--pres-accent); display: block; margin-bottom: 6px;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .sep {
+            width: 70px; height: 3px; background: var(--pres-accent);
+            border-radius: 2px; margin: 10px 0 14px;
+        }
+        .slide-desc {
+            font-family: var(--font-display); font-size: 23px;
+            color: var(--pres-muted); line-height: 1.55; max-width: 780px;
+        }
+        .slide-desc strong { color: var(--pres-text); font-weight: 600; }
+        .note {
+            font-family: var(--font-display); font-size: 19px;
+            color: var(--pres-dim); font-style: italic; margin-top: 10px;
+        }
+        .note .hl { color: var(--pres-amber); font-style: normal; font-weight: 600; }
+        code {
+            font-family: var(--font-code); font-size: 0.88em;
+            background: var(--pres-code-bg); border: 1px solid var(--pres-border);
+            border-radius: 4px; padding: 1px 7px; color: var(--pres-accent);
+        }
+        .two-col { display: flex; gap: 36px; flex: 1; margin-top: 14px; }
+        .two-col > .col { flex: 1; min-width: 0; }
+        .two-col > .col-info { flex: 0 0 420px; min-width: 0; }
+        .two-col > .col-mock { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+        /* ===========================================
+           TITLE SLIDE
+           =========================================== */
+        .title-slide .slide-inner {
+            justify-content: center; align-items: center; text-align: center;
+        }
+        .title-slide::after {
+            content: ''; position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(100,255,218,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(100,255,218,0.03) 1px, transparent 1px);
+            background-size: 60px 60px; pointer-events: none;
+        }
+        .title-slide h1 {
+            font-family: var(--font-display); font-size: 68px; font-weight: 800;
+            color: var(--pres-text); line-height: 1.12; letter-spacing: -1.5px;
+            max-width: 1400px;
+        }
+        .title-slide h1 .accent { color: var(--pres-accent); }
+        .title-slide .subtitle {
+            font-family: var(--font-display); font-size: 30px;
+            color: var(--pres-muted); margin-top: 20px; font-weight: 400;
+        }
+        .title-slide .meta {
+            font-family: var(--font-code); font-size: 18px;
+            color: var(--pres-dim); margin-top: 40px; letter-spacing: 0.5px;
+        }
+
+        /* ===========================================
+           DASHBOARD MOCKUP STYLES
+           "Screenshot" appearance — light theme inside dark slide
+           =========================================== */
+        .mock {
+            background: var(--d-deep);
+            border-radius: 10px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            font-family: var(--font-dash);
+            color: var(--d-text);
+            flex: 1;
+        }
+        /* Browser chrome bar */
+        .mock-browser {
+            height: 34px; background: #e8eaed;
+            display: flex; align-items: center; padding: 0 12px; gap: 8px;
+            border-bottom: 1px solid #d0d4d8; flex-shrink: 0;
+        }
+        .mock-dot {
+            width: 11px; height: 11px; border-radius: 50%;
+        }
+        .mock-dot.r { background: #ff5f57; }
+        .mock-dot.y { background: #febc2e; }
+        .mock-dot.g { background: #28c840; }
+        .mock-url {
+            flex: 1; margin-left: 12px;
+            background: #fff; border-radius: 4px; padding: 3px 10px;
+            font-size: 12px; color: #888; font-family: var(--font-dash);
+            border: 1px solid #d0d4d8;
+        }
+        /* Dashboard header */
+        .mock-header {
+            height: 48px; background: var(--d-surface);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; border-bottom: 1px solid var(--d-border);
+            flex-shrink: 0;
+        }
+        .mock-logo {
+            font-size: 16px; font-weight: 700; color: var(--d-text);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .mock-logo .bolt { font-size: 18px; }
+        .mock-user {
+            font-size: 12px; color: var(--d-text2);
+        }
+        .mock-user b { color: var(--d-text); }
+        /* Tab navigation */
+        .mock-tabs {
+            display: flex; gap: 0; background: var(--d-surface);
+            border-bottom: 2px solid var(--d-border); flex-shrink: 0;
+            padding: 0 20px;
+        }
+        .mock-tab {
+            padding: 10px 18px; font-size: 13px; font-weight: 600;
+            color: var(--d-muted); cursor: default;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            white-space: nowrap;
+        }
+        .mock-tab.active {
+            color: var(--d-accent); border-bottom-color: var(--d-accent);
+        }
+        /* Dashboard body */
+        .mock-body {
+            flex: 1; padding: 16px 20px; overflow: hidden;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .mock-body-row {
+            display: flex; gap: 14px;
+        }
+        .mock-body-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .mock-body-drawer {
+            flex: 0 0 210px; display: flex; flex-direction: column; gap: 10px;
+        }
+
+        /* --- Form elements (inside mockups) --- */
+        .m-label {
+            font-size: 12px; font-weight: 600; color: var(--d-text2);
+            margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .m-input {
+            background: var(--d-surface); border: 1px solid var(--d-border);
+            border-radius: 5px; padding: 7px 10px; font-size: 13px;
+            color: var(--d-text); font-family: var(--font-dash);
+            width: 100%;
+        }
+        .m-input.code {
+            font-family: var(--font-code); font-size: 12px;
+            background: #f8f9fb;
+        }
+        .m-input.focus {
+            border-color: var(--d-accent);
+            box-shadow: 0 0 0 2px rgba(33,92,175,0.15);
+        }
+        .m-select {
+            background: var(--d-surface); border: 1px solid var(--d-border);
+            border-radius: 5px; padding: 7px 10px; font-size: 13px;
+            color: var(--d-text); font-family: var(--font-dash); width: 100%;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
+        }
+        .m-textarea {
+            background: var(--d-surface); border: 1px solid var(--d-border);
+            border-radius: 5px; padding: 7px 10px; font-size: 13px;
+            color: var(--d-text); font-family: var(--font-dash);
+            width: 100%; resize: none;
+        }
+        .m-file-drop {
+            background: var(--d-surface); border: 2px dashed var(--d-border);
+            border-radius: 6px; padding: 14px; text-align: center;
+            font-size: 13px; color: var(--d-muted);
+        }
+        .m-file-drop .icon { font-size: 22px; margin-bottom: 4px; }
+        .m-file-drop .name {
+            font-weight: 600; color: var(--d-accent); font-size: 13px;
+        }
+        .m-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 7px 18px; border-radius: 5px; font-size: 13px;
+            font-weight: 600; font-family: var(--font-dash); cursor: default;
+            border: 1px solid var(--d-border); background: var(--d-surface);
+            color: var(--d-text);
+        }
+        .m-btn-primary {
+            background: var(--d-accent); color: #fff; border-color: var(--d-accent);
+        }
+        .m-btn-danger {
+            background: var(--d-err); color: #fff; border-color: var(--d-err);
+        }
+        .m-row { display: flex; gap: 12px; align-items: flex-start; }
+        .m-group { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+        .m-group.half { flex: 0 0 48%; }
+        .m-group.full { flex: 0 0 100%; }
+        .m-section-title {
+            font-size: 13px; font-weight: 700; color: var(--d-text);
+            margin-top: 6px; margin-bottom: 2px;
+            padding-bottom: 3px; border-bottom: 1px solid var(--d-border);
+        }
+        /* Multiselect chips */
+        .m-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+        .m-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e9eff7; border: 1px solid var(--d-border);
+            border-radius: 4px; padding: 2px 8px; font-size: 11px;
+            color: var(--d-text2); white-space: nowrap;
+        }
+        .m-chip .x { color: var(--d-muted); font-size: 12px; }
+        .m-chip.accent {
+            background: rgba(33,92,175,0.1); border-color: rgba(33,92,175,0.3);
+            color: var(--d-accent); font-weight: 500;
+        }
+
+        /* --- Dataset cards --- */
+        .m-ds-card {
+            background: var(--d-card); border: 1px solid var(--d-border);
+            border-radius: 7px; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .m-ds-head {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .m-ds-badge {
+            font-family: var(--font-code); font-size: 10px; font-weight: 500;
+            text-transform: uppercase; padding: 1px 6px; border-radius: 3px;
+            background: #e9eff7; color: var(--d-accent); letter-spacing: 0.04em;
+        }
+        .m-ds-title {
+            font-size: 14px; font-weight: 600; color: var(--d-text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .m-ds-id {
+            font-family: var(--font-code); font-size: 10px; color: var(--d-muted);
+        }
+        .m-ds-desc {
+            font-size: 12px; color: var(--d-text2); line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .m-ds-actions {
+            display: flex; gap: 6px; font-size: 14px; opacity: 0.5;
+        }
+        .m-ds-meta {
+            display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px;
+            color: var(--d-muted); border-top: 1px solid var(--d-border);
+            padding-top: 6px;
+        }
+
+        /* --- Lineage table --- */
+        .m-table {
+            width: 100%; border-collapse: collapse; font-size: 12px;
+        }
+        .m-table th {
+            text-align: left; padding: 6px 8px; font-size: 11px;
+            font-weight: 600; color: var(--d-text2); text-transform: uppercase;
+            letter-spacing: 0.04em; border-bottom: 2px solid var(--d-border);
+            background: var(--d-surface);
+        }
+        .m-table td {
+            padding: 6px 8px; border-bottom: 1px solid var(--d-border);
+            color: var(--d-text); vertical-align: top;
+        }
+        .m-table .mono {
+            font-family: var(--font-code); font-size: 11px; color: var(--d-muted);
+        }
+        .m-table .rel-self { color: var(--d-accent); font-weight: 600; }
+        .m-table .rel-anc { color: var(--d-soft); font-weight: 500; }
+
+        /* --- Pipeline flow diagram --- */
+        .m-pipeline {
+            display: flex; gap: 8px; align-items: flex-start;
+            padding: 10px; overflow: hidden;
+        }
+        .m-pipe-stage {
+            display: flex; flex-direction: column; gap: 5px;
+            align-items: center; min-width: 120px;
+        }
+        .m-pipe-node {
+            padding: 6px 10px; border-radius: 6px; font-size: 11px;
+            font-weight: 600; text-align: center; white-space: nowrap;
+            max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .m-pipe-node.raw { background: #fde8e8; color: #b7352d; border: 1px solid #f0bcba; }
+        .m-pipe-node.clean { background: #e8f0fd; color: #215caf; border: 1px solid #b5ccee; }
+        .m-pipe-node.pckl { background: #eaf4e4; color: #627313; border: 1px solid #c8ddb2; }
+        .m-pipe-node.grid { background: #fef3e0; color: #b8860b; border: 1px solid #eed9a8; }
+        .m-pipe-node.fig { background: #f3e8fd; color: #7c3aed; border: 1px solid #d4b5ee; }
+        .m-pipe-node.group {
+            background: #f4f6f8; color: var(--d-muted); border: 1px dashed var(--d-border);
+            font-style: italic;
+        }
+        .m-pipe-arrow {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--d-muted); padding-top: 6px;
+            min-width: 28px;
+        }
+
+        /* --- Dialog overlay (inside mockup) --- */
+        .mock-dialog-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.35);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .mock-dialog {
+            background: var(--d-surface); border-radius: 10px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+            width: 560px; max-height: 92%; overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .mock-dialog.wide { width: 680px; }
+        .mock-dialog-head {
+            padding: 16px 20px 12px; font-size: 17px; font-weight: 700;
+            color: var(--d-text); border-bottom: 1px solid var(--d-border);
+        }
+        .mock-dialog-body {
+            padding: 14px 20px; display: flex; flex-direction: column; gap: 10px;
+            flex: 1; overflow: hidden;
+        }
+        .mock-dialog-foot {
+            padding: 12px 20px; border-top: 1px solid var(--d-border);
+            display: flex; justify-content: flex-end; gap: 8px;
+        }
+        /* Danger banner inside dialog */
+        .m-danger-banner {
+            background: #fde8e8; border: 1px solid #f0bcba; border-radius: 5px;
+            padding: 10px 14px; font-size: 13px; color: var(--d-err);
+            font-weight: 500;
+        }
+
+        /* --- Callout annotations --- */
+        .callout {
+            position: absolute; width: 28px; height: 28px; border-radius: 50%;
+            background: var(--pres-accent); color: #0c1222;
+            font-family: var(--font-display); font-size: 14px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(100,255,218,0.4);
+            z-index: 20;
+        }
+        .callout-list {
+            list-style: none; padding: 0; margin: 0;
+        }
+        .callout-list li {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-bottom: 10px; font-family: var(--font-display);
+            font-size: 20px; color: var(--pres-muted); line-height: 1.45;
+        }
+        .callout-list .num {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+            background: var(--pres-accent); color: #0c1222;
+            font-size: 13px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .callout-list strong { color: var(--pres-text); font-weight: 600; }
+
+        /* --- Provenance highlight (yellow glow inside mockups) --- */
+        .prov-highlight {
+            outline: 2px solid #ffd166;
+            outline-offset: 2px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .prov-highlight::after {
+            content: 'PROV-O';
+            position: absolute; top: -10px; right: 4px;
+            font-family: var(--font-code); font-size: 9px; font-weight: 700;
+            color: #ffd166; background: #3a2e00; padding: 1px 5px;
+            border-radius: 3px; letter-spacing: 0.5px;
+        }
+
+        /* --- Info card (dark side) --- */
+        .info-card {
+            background: var(--pres-card-bg); border: 1px solid var(--pres-border);
+            border-radius: 8px; padding: 16px 20px;
+        }
+        .info-card h4 {
+            font-family: var(--font-display); font-size: 22px; font-weight: 600;
+            color: var(--pres-text); margin-bottom: 8px;
+        }
+        .info-card p {
+            font-family: var(--font-display); font-size: 19px;
+            color: var(--pres-muted); line-height: 1.5;
+        }
+
+        /* --- Drawer section (inside mock) --- */
+        .m-drawer-section {
+            font-size: 11px; font-weight: 700; color: var(--d-muted);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+        .m-drawer-card {
+            background: var(--d-card); border: 1px solid var(--d-border);
+            border-radius: 6px; padding: 10px 12px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .m-status-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: #627313; margin-right: 4px;
+        }
+
+        /* --- Card grid for closing --- */
+        .card-row { display: flex; gap: 24px; }
+        .card {
+            flex: 1; background: var(--pres-card-bg);
+            border: 1px solid var(--pres-border);
+            border-radius: 10px; padding: 24px 28px;
+        }
+        .card h4 {
+            font-family: var(--font-display); font-size: 24px; font-weight: 600;
+            color: var(--pres-text); margin-bottom: 10px;
+        }
+        .card p {
+            font-family: var(--font-display); font-size: 21px;
+            color: var(--pres-muted); line-height: 1.55;
+        }
+
+        /* --- Diagram --- */
+        .diagram {
+            font-family: var(--font-code); font-size: 20px; line-height: 1.6;
+            color: var(--pres-muted); background: var(--pres-code-bg);
+            border: 1px solid var(--pres-border); border-radius: 10px;
+            padding: 22px 30px; white-space: pre;
+        }
+        .diagram .folder { color: var(--pres-amber); font-weight: 500; }
+        .diagram .arrow { color: var(--pres-accent); }
+        .diagram .desc { color: var(--pres-dim); }
+
+        /* --- Nudge callout (in mockup) --- */
+        .m-nudge {
+            background: #fef9e7; border: 1px solid #f0e1a0;
+            border-left: 3px solid #d4a80b; border-radius: 5px;
+            padding: 8px 12px; font-size: 12px; color: #7a6000;
+        }
+
+        /* --- Progress bar & counter --- */
+        .progress-bar {
+            position: fixed; bottom: 0; left: 0; height: 3px;
+            background: var(--pres-accent);
+            transition: width 0.3s var(--ease-out-expo); z-index: 1001;
+        }
+        .slide-counter {
+            position: fixed; bottom: 24px; right: 32px;
+            font-family: var(--font-code); font-size: 16px;
+            color: var(--pres-dim); z-index: 1001;
+        }
+
+        /* --- Phase label --- */
+        .phase-label {
+            font-family: var(--font-code); font-size: 16px;
+            color: var(--pres-accent); letter-spacing: 1px;
+            text-transform: uppercase; margin-bottom: 4px;
+        }
+
+        /* Helper for relative positioning inside mock */
+        .mock-rel { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <!-- ============================================================
+                 SLIDE 1: TITLE
+                 ============================================================ -->
+            <section class="slide title-slide active" aria-label="Title">
+                <div class="slide-inner">
+                    <h1 class="reveal">Replicating the Groupe-E<br>Provisioning Example<br>with the <span class="accent">ESDH Dashboard</span></h1>
+                    <p class="subtitle reveal">A visual walkthrough for data stewards using the web interface</p>
+                    <p class="meta reveal">Energy Systems Data Hub &middot; PROV-O Lineage &middot; Dashboard UI</p>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 2: LIFECYCLE OVERVIEW
+                 ============================================================ -->
+            <section class="slide" aria-label="Lifecycle overview">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Overview</span>The five-stage data lifecycle</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <div class="diagram"><span class="folder">raw_input_data</span>
+    <span class="desc">(original BFS + SOLKAT)</span>
+        <span class="arrow">|</span>
+        <span class="arrow">v</span>
+<span class="folder">input_clean_data</span>
+    <span class="desc">(cleaned, filtered)</span>
+        <span class="arrow">|</span>
+        <span class="arrow">v</span>
+<span class="folder">regionalization/all_pckls</span>
+    <span class="desc">(time-series per region)</span>
+        <span class="arrow">|</span>
+        <span class="arrow">v</span>
+<span class="folder">grid_planning_results</span>
+    <span class="desc">(expansion + costs)</span>
+        <span class="arrow">|</span>
+        <span class="arrow">v</span>
+<span class="folder">grid_planning_publication/</span>
+<span class="folder">figures</span>
+    <span class="desc">(PNG charts)</span></div>
+                            <p class="note" style="margin-top:14px;">Each phase <span class="hl">depends on the previous one</span>. The dataset IDs returned by uploads become the <code>derived_from</code> parents of the next phase.</p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <!-- Mini dashboard preview -->
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; <span style="font-family:var(--font-code);font-size:11px;">yaman</span></div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab active">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="font-size:12px;color:var(--d-text2);">Repositories &rsaquo; <b>groupe-e-planning-process</b> &rsaquo; &#9095; main</div>
+                                    <div class="mock-body-row" style="flex:1;">
+                                        <div class="mock-body-main">
+                                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                                <div class="m-ds-card" style="flex:1;min-width:200px;">
+                                                    <div class="m-ds-head"><span class="m-ds-badge">xlsx</span><span class="m-ds-actions">&#129516; &#128187; &#128221; &#11015; &#128465;</span></div>
+                                                    <div class="m-ds-title">BFS_VS_VD_FR_GE.xlsx</div>
+                                                    <div class="m-ds-id">dataset_a1b2c3...</div>
+                                                    <div class="m-ds-desc">Raw BFS EGID list (building register) for Group E planning process</div>
+                                                    <div class="m-chips"><span class="m-chip">EGID</span><span class="m-chip">BFS</span><span class="m-chip">raw</span></div>
+                                                    <div class="m-ds-meta"><span>&#128100; yaman</span><span>&#128193; raw_input_data</span></div>
+                                                </div>
+                                                <div class="m-ds-card" style="flex:1;min-width:200px;">
+                                                    <div class="m-ds-head"><span class="m-ds-badge">xlsx</span><span class="m-ds-actions">&#129516; &#128187; &#128221; &#11015; &#128465;</span></div>
+                                                    <div class="m-ds-title">SOLKAT_CH_DACH_Intersect.xlsx</div>
+                                                    <div class="m-ds-id">dataset_d4e5f6...</div>
+                                                    <div class="m-ds-desc">Raw SOLKAT solar potential per EGID (DACH intersect)</div>
+                                                    <div class="m-chips"><span class="m-chip">SOLKAT</span><span class="m-chip">PV</span><span class="m-chip">DACH</span></div>
+                                                    <div class="m-ds-meta"><span>&#128100; yaman</span><span>&#128193; raw_input_data</span></div>
+                                                </div>
+                                            </div>
+                                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                                <div class="m-ds-card" style="flex:1;min-width:200px;">
+                                                    <div class="m-ds-head"><span class="m-ds-badge">csv</span></div>
+                                                    <div class="m-ds-title">input_BFS_HAK_EGID.csv</div>
+                                                    <div class="m-ds-desc">Cleaned BFS EGID list (HAK filter)</div>
+                                                    <div class="m-ds-meta"><span>&#128193; input_clean_data</span></div>
+                                                </div>
+                                                <div class="m-ds-card" style="flex:1;min-width:200px;">
+                                                    <div class="m-ds-head"><span class="m-ds-badge">csv</span></div>
+                                                    <div class="m-ds-title">input_PV_HAK_EGID.csv</div>
+                                                    <div class="m-ds-desc">Cleaned PV input per EGID</div>
+                                                    <div class="m-ds-meta"><span>&#128193; input_clean_data</span></div>
+                                                </div>
+                                                <div class="m-ds-card" style="flex:1;min-width:130px;">
+                                                    <div class="m-ds-head"><span class="m-ds-badge">csv</span></div>
+                                                    <div class="m-ds-title">input_scenarios.csv</div>
+                                                    <div class="m-ds-desc">Scenario assumptions</div>
+                                                    <div class="m-ds-meta"><span>&#128193; input_clean_data</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mock-body-drawer">
+                                            <div class="m-drawer-section">Repository</div>
+                                            <div class="m-select" style="font-size:11px;padding:5px 8px;">groupe-e-planning-process</div>
+                                            <div class="m-drawer-section" style="margin-top:6px;">Branch</div>
+                                            <div class="m-select" style="font-size:11px;padding:5px 8px;">main</div>
+                                            <div class="m-btn m-btn-primary" style="font-size:11px;padding:5px 12px;margin-top:6px;text-align:center;">&#128228; Upload dataset</div>
+                                            <div class="m-btn" style="font-size:11px;padding:5px 12px;text-align:center;">&#128187; Clone via SDK</div>
+                                            <div style="margin-top:auto;font-size:11px;color:var(--d-muted);"><span class="m-status-dot"></span> Platform online</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 3: PHASE 0 — CREATE REPOSITORY
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 0 - Create repository">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 0</span>Create the repository</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Open the <strong>Working in a Repository</strong> tab and click the repository dropdown in the right drawer. Select <strong>"Other (type a name)..."</strong> to create a new one, then fill in the dialog.</p>
+                            <ul class="callout-list" style="margin-top:18px;">
+                                <li><span class="num">1</span><span><strong>Repository name</strong> &mdash; lowercase, hyphens only. This becomes the bucket name in storage.</span></li>
+                                <li><span class="num">2</span><span><strong>Title</strong> &mdash; human-readable display name.</span></li>
+                                <li><span class="num">3</span><span><strong>Owner</strong> &mdash; who is responsible for this repository.</span></li>
+                                <li><span class="num">4</span><span>Click <strong>Create</strong> to provision the repository. If it already exists, it will be reused.</span></li>
+                            </ul>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab active">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog">
+                                            <div class="mock-dialog-head">Create repository</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-group" style="position:relative;">
+                                                    <div class="m-label">Repository name *</div>
+                                                    <input class="m-input code" value="groupe-e-planning-process" readonly>
+                                                    <div class="callout" style="right:-18px;top:4px;">1</div>
+                                                </div>
+                                                <div class="m-group" style="position:relative;">
+                                                    <div class="m-label">Title *</div>
+                                                    <input class="m-input" value="Groupe-E Planning Process" readonly>
+                                                    <div class="callout" style="right:-18px;top:4px;">2</div>
+                                                </div>
+                                                <div class="m-row">
+                                                    <div class="m-group half" style="position:relative;">
+                                                        <div class="m-label">Owner</div>
+                                                        <input class="m-input" value="yaman" readonly>
+                                                        <div class="callout" style="right:-18px;top:4px;">3</div>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Spatial coverage</div>
+                                                        <input class="m-input" value="CH (VS, VD, FR, GE)" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Themes</div>
+                                                    <div class="m-chips">
+                                                        <span class="m-chip accent">Grid <span class="x">&times;</span></span>
+                                                        <span class="m-chip accent">Solar <span class="x">&times;</span></span>
+                                                        <span class="m-chip accent">Optimization <span class="x">&times;</span></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot" style="position:relative;">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Create</div>
+                                                <div class="callout" style="right:-14px;top:2px;">4</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 4: PHASE 1 — UPLOAD RAW FILES
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 1 - Upload raw files">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 1</span>Upload raw_input_data/ &mdash; the root nodes</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Click <strong>"Upload dataset"</strong> in the right drawer. Upload the two original source files: the BFS building register and the SOLKAT solar-potential intersection.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>Drag and drop the <strong>file</strong> or click to browse.</span></li>
+                                <li><span class="num">2</span><span>Set <strong>Folder</strong> to <code>raw_input_data</code> so files land in the correct storage subpath.</span></li>
+                                <li><span class="num">3</span><span>Fill in <strong>Title</strong>, <strong>Owner</strong>, and <strong>Description</strong>.</span></li>
+                                <li><span class="num">4</span><span>Add <strong>Domain tags</strong> for discoverability.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:16px;">
+                                <h4 style="font-size:19px;">No lineage yet</h4>
+                                <p style="font-size:17px;">These are <strong style="color:var(--pres-amber);">root nodes</strong> &mdash; they have no parents. Skip the Provenance section entirely. The dataset IDs returned after upload will be needed in Phase 2.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-group" style="position:relative;">
+                                                    <div class="m-file-drop">
+                                                        <div class="icon">&#128206;</div>
+                                                        <div class="name">BFS_VS_VD_FR_GE.xlsx</div>
+                                                        <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">1.8 MB &middot; application/vnd.openxmlformats</div>
+                                                    </div>
+                                                    <div class="callout" style="right:-16px;top:10px;">1</div>
+                                                </div>
+                                                <div class="m-group" style="position:relative;">
+                                                    <div class="m-label">Folder</div>
+                                                    <div class="m-select">raw_input_data</div>
+                                                    <div class="callout" style="right:-16px;top:4px;">2</div>
+                                                </div>
+                                                <div class="m-row" style="position:relative;">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Title</div>
+                                                        <input class="m-input" value="BFS_VS_VD_FR_GE.xlsx" readonly>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Owner</div>
+                                                        <input class="m-input" value="yaman" readonly>
+                                                    </div>
+                                                    <div class="callout" style="right:-16px;top:4px;">3</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Description</div>
+                                                    <textarea class="m-textarea" rows="2" readonly>Raw BFS EGID list (building register) for Group E planning process</textarea>
+                                                </div>
+                                                <div class="m-group" style="position:relative;">
+                                                    <div class="m-label">Domain tags</div>
+                                                    <div class="m-chips">
+                                                        <span class="m-chip accent">Grid <span class="x">&times;</span></span>
+                                                    </div>
+                                                    <div class="callout" style="right:-16px;top:2px;">4</div>
+                                                </div>
+                                                <div style="border-top:1px solid var(--d-border);padding-top:8px;">
+                                                    <div class="m-section-title" style="color:var(--d-muted);font-weight:500;font-size:12px;">&#128279; Provenance <span style="font-weight:400;font-style:italic;">(optional)</span></div>
+                                                    <div style="font-size:12px;color:var(--d-muted);padding:4px 0;">No parent datasets &mdash; this is a root file.</div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 5: PHASE 2 — CLEAN UPLOADS WITH LINEAGE
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 2 - Clean uploads with lineage">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 2</span>Upload input_clean_data/ &mdash; first lineage links</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Upload three cleaned CSVs. Two have a parent via the <strong>Provenance</strong> section. This is where <strong>PROV-O lineage</strong> begins.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>Select <strong>Derived from</strong> &mdash; pick the raw BFS dataset from the dropdown. This creates a <code>prov:wasDerivedFrom</code> edge.</span></li>
+                                <li><span class="num">2</span><span>Enter a <strong>Run ID</strong>: <code>clean_2024-04-30</code>. This groups all cleaning outputs under a single PROV-O Activity.</span></li>
+                                <li><span class="num">3</span><span>Repeat for <strong>input_PV_HAK_EGID.csv</strong> (derived from raw SOLKAT) with the same Run ID.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:12px;">
+                                <h4 style="font-size:19px;">input_scenarios.csv has no parent</h4>
+                                <p style="font-size:17px;">Hand-curated file &mdash; leave Provenance empty. Not every file needs lineage.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-file-drop">
+                                                    <div class="icon">&#128206;</div>
+                                                    <div class="name">input_BFS_HAK_EGID.csv</div>
+                                                    <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">420 KB &middot; text/csv</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Folder</div>
+                                                    <div class="m-select">input_clean_data</div>
+                                                </div>
+                                                <div class="m-row">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Title</div>
+                                                        <input class="m-input" value="input_BFS_HAK_EGID.csv" readonly>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Owner</div>
+                                                        <input class="m-input" value="yaman" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Description</div>
+                                                    <textarea class="m-textarea" rows="1" readonly>Cleaned BFS EGID list (HAK filter applied) - DataCleaning output</textarea>
+                                                </div>
+                                                <!-- PROVENANCE SECTION - highlighted -->
+                                                <div class="prov-highlight" style="padding:10px 12px;border-top:1px solid var(--d-border);">
+                                                    <div class="m-section-title" style="margin-top:0;">&#128279; Provenance</div>
+                                                    <div class="m-nudge" style="margin-bottom:6px;">&#128161; This file may have been derived from existing datasets. Pick them to record the relationship.</div>
+                                                    <div class="m-group" style="position:relative;">
+                                                        <div class="m-label">Derived from</div>
+                                                        <div class="m-chips">
+                                                            <span class="m-chip accent">raw_input_data &middot; BFS_VS_VD_FR_GE.xlsx <span class="x">&times;</span></span>
+                                                        </div>
+                                                        <div class="callout" style="right:-16px;top:2px;">1</div>
+                                                    </div>
+                                                    <div class="m-group" style="margin-top:6px;position:relative;">
+                                                        <div class="m-label">Run ID</div>
+                                                        <input class="m-input code focus" value="clean_2024-04-30" readonly>
+                                                        <div class="callout" style="right:-16px;top:4px;">2</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 6: PHASE 3 — PCKL FILES
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 3 - Pckl uploads">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 3</span>Upload regionalization/all_pckls/ &mdash; 3 inputs, 1 run</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Upload each <code>.pckl</code> file. All three cleaned inputs are selected as parents. All share the run ID <strong>regionalize_2024-04-30</strong>.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>Select <strong>all three</strong> cleaned datasets in the "Derived from" multiselect &mdash; regionalization consumes all of them together.</span></li>
+                                <li><span class="num">2</span><span>Set <strong>Run ID</strong> to <code>regionalize_2024-04-30</code> &mdash; this groups the many pckl outputs under a single PROV-O Activity.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:14px;">
+                                <h4 style="font-size:19px;">Repeat for every .pckl file</h4>
+                                <p style="font-size:17px;">Upload one file at a time. Keep the same <strong style="color:var(--pres-amber);">Derived from</strong> selection and <strong style="color:var(--pres-amber);">Run ID</strong> for each. The hub records "3 inputs &#8594; 1 run &#8594; many outputs" as a single queryable activity.</p>
+                            </div>
+                            <p class="note" style="margin-top:10px;">Save every <span class="hl">dataset_id</span> from the upload confirmations &mdash; Phase 4 needs all of them as parents.</p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-file-drop">
+                                                    <div class="icon">&#128206;</div>
+                                                    <div class="name">region_001.pckl</div>
+                                                    <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">2.4 MB &middot; application/octet-stream</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Folder</div>
+                                                    <div class="m-select">regionalization_and_time_series/all_pckls</div>
+                                                </div>
+                                                <div class="m-row">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Title</div>
+                                                        <input class="m-input" value="region_001.pckl" readonly>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Owner</div>
+                                                        <input class="m-input" value="yaman" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Description</div>
+                                                    <textarea class="m-textarea" rows="1" readonly>Regionalized time series: region_001.pckl</textarea>
+                                                </div>
+                                                <!-- PROVENANCE -->
+                                                <div class="prov-highlight" style="padding:10px 12px;border-top:1px solid var(--d-border);">
+                                                    <div class="m-section-title" style="margin-top:0;">&#128279; Provenance</div>
+                                                    <div class="m-group" style="position:relative;">
+                                                        <div class="m-label">Derived from</div>
+                                                        <div class="m-chips">
+                                                            <span class="m-chip accent">input_clean_data &middot; input_BFS_HAK_EGID.csv <span class="x">&times;</span></span>
+                                                            <span class="m-chip accent">input_clean_data &middot; input_PV_HAK_EGID.csv <span class="x">&times;</span></span>
+                                                            <span class="m-chip accent">input_clean_data &middot; input_scenarios.csv <span class="x">&times;</span></span>
+                                                        </div>
+                                                        <div class="callout" style="right:-16px;top:2px;">1</div>
+                                                    </div>
+                                                    <div class="m-group" style="margin-top:6px;position:relative;">
+                                                        <div class="m-label">Run ID</div>
+                                                        <input class="m-input code focus" value="regionalize_2024-04-30" readonly>
+                                                        <div class="callout" style="right:-16px;top:4px;">2</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 7: PHASE 4 — GRID PLANNING RESULTS
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 4 - Grid planning results">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 4</span>Upload grid_planning_results/ &mdash; many parents</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Upload the two grid-planning outputs (results and costs). Each lists <strong>every pckl dataset</strong> as a parent and shares the run <code>grid_planning_2024-04-30</code>.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>In <strong>Derived from</strong>, select all pckl datasets. If you have many, use the <strong>"I already have a dataset_id"</strong> expander to paste IDs directly.</span></li>
+                                <li><span class="num">2</span><span>Set <strong>Run ID</strong> to <code>grid_planning_2024-04-30</code>.</span></li>
+                                <li><span class="num">3</span><span>Repeat for <strong>2024-04-30_expansion_costs.xlsx</strong> with the same parents and run ID.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:12px;">
+                                <h4 style="font-size:19px;">Sharing run_id</h4>
+                                <p style="font-size:17px;">Both the results table and cost table share the same Run ID. This means you can later query: <em style="color:var(--pres-amber);">"show me everything produced by the 2024-04-30 grid-planning run."</em></p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-file-drop">
+                                                    <div class="icon">&#128206;</div>
+                                                    <div class="name">2024-04-30_expansion_results.xlsx</div>
+                                                    <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">3.1 MB &middot; application/vnd.openxmlformats</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Folder</div>
+                                                    <div class="m-select">grid_planning_results</div>
+                                                </div>
+                                                <div class="m-row">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Title</div>
+                                                        <input class="m-input" value="2024-04-30_expansion_results.xlsx" readonly>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Description</div>
+                                                        <input class="m-input" value="OGP1 grid-expansion results" readonly>
+                                                    </div>
+                                                </div>
+                                                <!-- PROVENANCE with many parents -->
+                                                <div class="prov-highlight" style="padding:10px 12px;border-top:1px solid var(--d-border);">
+                                                    <div class="m-section-title" style="margin-top:0;">&#128279; Provenance</div>
+                                                    <div class="m-group" style="position:relative;">
+                                                        <div class="m-label">Derived from</div>
+                                                        <div class="m-chips">
+                                                            <span class="m-chip accent">all_pckls &middot; region_001.pckl <span class="x">&times;</span></span>
+                                                            <span class="m-chip accent">all_pckls &middot; region_002.pckl <span class="x">&times;</span></span>
+                                                            <span class="m-chip accent">all_pckls &middot; region_003.pckl <span class="x">&times;</span></span>
+                                                            <span class="m-chip" style="background:#f0f0f0;color:var(--d-text2);">+42 more</span>
+                                                        </div>
+                                                        <div class="callout" style="right:-16px;top:2px;">1</div>
+                                                    </div>
+                                                    <div class="m-group" style="margin-top:6px;position:relative;">
+                                                        <div class="m-label">Run ID</div>
+                                                        <input class="m-input code focus" value="grid_planning_2024-04-30" readonly>
+                                                        <div class="callout" style="right:-16px;top:4px;">2</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 8: PHASE 5 — FIGURES
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 5 - Figures">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 5</span>Upload grid_planning_publication/figures/</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Upload each publication PNG. Both the results and costs tables are parents. Run: <code>publication_2024-04-30</code>.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>Select <strong>both</strong> grid-planning outputs as parents: the results file and the costs file.</span></li>
+                                <li><span class="num">2</span><span>Set <strong>Run ID</strong> to <code>publication_2024-04-30</code>.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:14px;">
+                                <h4 style="font-size:19px;">Last step of the lifecycle</h4>
+                                <p style="font-size:17px;">Once all 7 figures are uploaded, <strong style="color:var(--pres-accent)">every figure is traceable</strong> back to the raw BFS / SOLKAT inputs through the full chain.</p>
+                            </div>
+                            <p class="note" style="margin-top:10px;">Repeat for all 7 figures:<br><span style="font-family:var(--font-code);font-size:15px;color:var(--pres-dim);line-height:2;">fig_PV_curt_box_default_en.png<br>fig_PV2Dem_Cost_default_en.png<br>fig_PV2NewDem_Cost_region_default_en.png<br>fig_PV2NewDem_Cost_year_default_en.png<br>fig_QU_box_default_en.png<br>fig_RONT_box_default_en.png<br>fig_Trafo_vs_Akm_default_en.png</span></p>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog wide">
+                                            <div class="mock-dialog-head">Upload dataset</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-file-drop">
+                                                    <div class="icon">&#128444;</div>
+                                                    <div class="name">fig_PV2Dem_Cost_default_en.png</div>
+                                                    <div style="font-size:11px;color:var(--d-muted);margin-top:2px;">185 KB &middot; image/png</div>
+                                                </div>
+                                                <div class="m-group">
+                                                    <div class="m-label">Folder</div>
+                                                    <div class="m-select">grid_planning_publication/figures</div>
+                                                </div>
+                                                <div class="m-row">
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Title</div>
+                                                        <input class="m-input" value="fig_PV2Dem_Cost_default_en.png" readonly>
+                                                    </div>
+                                                    <div class="m-group half">
+                                                        <div class="m-label">Description</div>
+                                                        <input class="m-input" value="Publication figure: PV2Dem Cost" readonly>
+                                                    </div>
+                                                </div>
+                                                <!-- PROVENANCE -->
+                                                <div class="prov-highlight" style="padding:10px 12px;border-top:1px solid var(--d-border);">
+                                                    <div class="m-section-title" style="margin-top:0;">&#128279; Provenance</div>
+                                                    <div class="m-group" style="position:relative;">
+                                                        <div class="m-label">Derived from</div>
+                                                        <div class="m-chips">
+                                                            <span class="m-chip accent">grid_planning_results &middot; 2024-04-30_expansion_results.xlsx <span class="x">&times;</span></span>
+                                                            <span class="m-chip accent">grid_planning_results &middot; 2024-04-30_expansion_costs.xlsx <span class="x">&times;</span></span>
+                                                        </div>
+                                                        <div class="callout" style="right:-16px;top:2px;">1</div>
+                                                    </div>
+                                                    <div class="m-group" style="margin-top:6px;position:relative;">
+                                                        <div class="m-label">Run ID</div>
+                                                        <input class="m-input code focus" value="publication_2024-04-30" readonly>
+                                                        <div class="callout" style="right:-16px;top:4px;">2</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-primary">Upload</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 9: PHASE 6a — SEARCH
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 6 - Search">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 6 &mdash; Audit</span>Search for a dataset</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Switch to <strong>Discovering &amp; Searching</strong>. Type a figure name in the search bar to confirm it was ingested correctly.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span><strong>Search bar</strong> &mdash; type the figure filename. The hub translates this to a SPARQL query.</span></li>
+                                <li><span class="num">2</span><span><strong>Results</strong> appear as dataset cards showing title, description, keywords, and metadata.</span></li>
+                                <li><span class="num">3</span><span>Click the <strong>&#129516; Lineage</strong> button on a card to jump to the lineage view.</span></li>
+                            </ul>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab active">Discovering &amp; Searching</div>
+                                    <div class="mock-tab">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <!-- Search bar -->
+                                    <div style="display:flex;gap:10px;align-items:center;position:relative;">
+                                        <input class="m-input focus" style="flex:3;font-size:14px;padding:10px 14px;" value="fig_PV2Dem_Cost_default_en.png" readonly>
+                                        <div class="m-select" style="flex:1;padding:10px;">groupe-e-planning-process</div>
+                                        <div class="m-btn m-btn-primary" style="padding:10px 20px;">&#128269; Search</div>
+                                        <div class="callout" style="left:-16px;top:4px;">1</div>
+                                    </div>
+                                    <div style="font-size:12px;color:var(--d-muted);">1 result found</div>
+                                    <!-- Result card -->
+                                    <div style="display:flex;gap:12px;position:relative;">
+                                        <div class="m-ds-card" style="flex:1;">
+                                            <div class="m-ds-head">
+                                                <span class="m-ds-badge">png</span>
+                                                <span class="m-ds-actions" style="position:relative;">
+                                                    <span title="Lineage" style="cursor:default;opacity:1;color:var(--d-accent);">&#129516;</span>
+                                                    <span>&#128187;</span><span>&#128221;</span><span>&#11015;</span><span>&#128465;</span>
+                                                </span>
+                                            </div>
+                                            <div class="m-ds-title">fig_PV2Dem_Cost_default_en.png</div>
+                                            <div class="m-ds-id">dataset_f7g8h9i0...</div>
+                                            <div class="m-ds-desc">Publication figure: fig_PV2Dem_Cost_default_en.png</div>
+                                            <div class="m-chips">
+                                                <span class="m-chip">figure</span>
+                                                <span class="m-chip">publication</span>
+                                                <span class="m-chip">en</span>
+                                            </div>
+                                            <div class="m-ds-meta">
+                                                <span>&#128100; yaman</span>
+                                                <span>&#9095; groupe-e-planning-process</span>
+                                                <span>@main</span>
+                                                <span>&#128193; grid_planning_publication/figures</span>
+                                            </div>
+                                        </div>
+                                        <div class="callout" style="left:-16px;top:20px;">2</div>
+                                        <div class="callout" style="right:60px;top:4px;">3</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 10: PHASE 6b — LINEAGE (FOCUSED)
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 6 - Lineage ancestors">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 6 &mdash; Audit</span>Trace lineage &mdash; "where did this come from?"</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Click the <strong>&#129516; Lineage</strong> button on any dataset card, or switch to the <strong>Lineage</strong> tab. The <strong>Focused</strong> sub-view shows ancestors and descendants.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span><strong>Focused</strong> mode &mdash; shows the lineage table for the selected dataset.</span></li>
+                                <li><span class="num">2</span><span>Each row shows the <strong>relationship</strong> (self, ancestor, descendant), title, folder, and run ID.</span></li>
+                                <li><span class="num">3</span><span>Click any ancestor to <strong>re-focus</strong> and explore its own lineage chain.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:14px;">
+                                <h4 style="font-size:19px;">The acceptance test</h4>
+                                <p style="font-size:17px;">If the ancestors column is populated, <strong style="color:var(--pres-accent);">the provisioning worked</strong>. If empty, a <code>derived_from</code> was missed at upload time.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab">Working in a Repository</div>
+                                    <div class="mock-tab active">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="display:flex;gap:12px;align-items:center;position:relative;">
+                                        <div style="display:flex;gap:0;border:1px solid var(--d-border);border-radius:5px;overflow:hidden;">
+                                            <div style="padding:6px 14px;font-size:12px;font-weight:600;background:var(--d-accent);color:#fff;">Focused</div>
+                                            <div style="padding:6px 14px;font-size:12px;font-weight:600;color:var(--d-muted);background:var(--d-surface);">Pipeline</div>
+                                        </div>
+                                        <div class="callout" style="left:-16px;top:0;">1</div>
+                                        <div style="flex:1;"></div>
+                                        <div class="m-btn" style="font-size:11px;padding:4px 10px;">&#10005; Clear focus</div>
+                                        <div class="m-btn" style="font-size:11px;padding:4px 10px;">&#128260; Refresh</div>
+                                    </div>
+                                    <div style="font-size:13px;color:var(--d-text);font-weight:600;">Focused on: fig_PV2Dem_Cost_default_en.png</div>
+                                    <div style="position:relative;">
+                                        <table class="m-table">
+                                            <thead>
+                                                <tr><th>Relationship</th><th>Title</th><th>Folder</th><th>Branch</th><th>Run</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr><td class="rel-self">self</td><td>fig_PV2Dem_Cost_default_en.png</td><td style="font-size:11px;">figures</td><td>main</td><td class="mono">publication_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>2024-04-30_expansion_results.xlsx</td><td style="font-size:11px;">grid_planning_results</td><td>main</td><td class="mono">grid_planning_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>2024-04-30_expansion_costs.xlsx</td><td style="font-size:11px;">grid_planning_results</td><td>main</td><td class="mono">grid_planning_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>region_001.pckl</td><td style="font-size:11px;">all_pckls</td><td>main</td><td class="mono">regionalize_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td style="color:var(--d-muted);font-style:italic;">... 44 more pckl files ...</td><td></td><td></td><td></td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>input_BFS_HAK_EGID.csv</td><td style="font-size:11px;">input_clean_data</td><td>main</td><td class="mono">clean_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>input_PV_HAK_EGID.csv</td><td style="font-size:11px;">input_clean_data</td><td>main</td><td class="mono">clean_2024-04-30</td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>input_scenarios.csv</td><td style="font-size:11px;">input_clean_data</td><td>main</td><td class="mono"></td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>BFS_VS_VD_FR_GE.xlsx</td><td style="font-size:11px;">raw_input_data</td><td>main</td><td class="mono"></td></tr>
+                                                <tr><td class="rel-anc">ancestor</td><td>SOLKAT_CH_DACH_Intersect.xlsx</td><td style="font-size:11px;">raw_input_data</td><td>main</td><td class="mono"></td></tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="callout" style="right:-16px;top:16px;">2</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 11: PHASE 6c — PIPELINE VIEW
+                 ============================================================ -->
+            <section class="slide" aria-label="Phase 6 - Pipeline view">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Phase 6 &mdash; Audit</span>Pipeline view &mdash; the whole activity graph</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">Switch to the <strong>Pipeline</strong> sub-view. This renders every <code>prov:wasDerivedFrom</code> edge as a flow diagram, color-coded by lifecycle stage.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span><strong>Pipeline</strong> tab &mdash; shows the complete derivation graph.</span></li>
+                                <li><span class="num">2</span><span>Nodes are colored by <strong>folder</strong> (stage). Large clusters (e.g. 45 pckl files) are collapsed into group nodes.</span></li>
+                                <li><span class="num">3</span><span>Arrows show the flow from raw inputs &#8594; cleaned &#8594; regionalized &#8594; results &#8594; figures.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:14px;">
+                                <h4 style="font-size:19px;">The complete lineage at a glance</h4>
+                                <p style="font-size:17px;">If edges span all five stages, the provisioning is <strong style="color:var(--pres-accent);">complete</strong>. A missing edge means a <code>derived_from</code> was missed.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab">Working in a Repository</div>
+                                    <div class="mock-tab active">Lineage</div>
+                                </div>
+                                <div class="mock-body">
+                                    <div style="display:flex;gap:12px;align-items:center;position:relative;">
+                                        <div style="display:flex;gap:0;border:1px solid var(--d-border);border-radius:5px;overflow:hidden;">
+                                            <div style="padding:6px 14px;font-size:12px;font-weight:600;color:var(--d-muted);background:var(--d-surface);">Focused</div>
+                                            <div style="padding:6px 14px;font-size:12px;font-weight:600;background:var(--d-accent);color:#fff;">Pipeline</div>
+                                        </div>
+                                        <div class="callout" style="left:-16px;top:0;">1</div>
+                                        <div style="flex:1;font-size:12px;color:var(--d-text2);">groupe-e-planning-process &middot; &#9095; main</div>
+                                    </div>
+                                    <!-- Pipeline flow diagram -->
+                                    <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;">
+                                        <div class="m-pipeline">
+                                            <div class="m-pipe-stage">
+                                                <div class="m-pipe-node raw">BFS_VS_VD<br>_FR_GE.xlsx</div>
+                                                <div class="m-pipe-node raw" style="margin-top:4px;">SOLKAT_CH<br>_DACH.xlsx</div>
+                                                <div style="font-size:10px;color:var(--d-muted);margin-top:4px;">raw_input_data</div>
+                                            </div>
+                                            <div class="m-pipe-arrow">&#8594;</div>
+                                            <div class="m-pipe-stage">
+                                                <div class="m-pipe-node clean">input_BFS<br>_HAK_EGID.csv</div>
+                                                <div class="m-pipe-node clean" style="margin-top:4px;">input_PV<br>_HAK_EGID.csv</div>
+                                                <div class="m-pipe-node clean" style="margin-top:4px;">input_<br>scenarios.csv</div>
+                                                <div style="font-size:10px;color:var(--d-muted);margin-top:4px;">input_clean_data</div>
+                                            </div>
+                                            <div class="m-pipe-arrow">&#8594;</div>
+                                            <div class="m-pipe-stage">
+                                                <div class="m-pipe-node pckl">region_001.pckl</div>
+                                                <div class="m-pipe-node pckl" style="margin-top:4px;">region_002.pckl</div>
+                                                <div class="m-pipe-node group" style="margin-top:4px;">45 pckl files</div>
+                                                <div style="font-size:10px;color:var(--d-muted);margin-top:4px;">all_pckls</div>
+                                            </div>
+                                            <div class="m-pipe-arrow">&#8594;</div>
+                                            <div class="m-pipe-stage">
+                                                <div class="m-pipe-node grid">expansion<br>_results.xlsx</div>
+                                                <div class="m-pipe-node grid" style="margin-top:4px;">expansion<br>_costs.xlsx</div>
+                                                <div style="font-size:10px;color:var(--d-muted);margin-top:4px;">grid_planning</div>
+                                            </div>
+                                            <div class="m-pipe-arrow">&#8594;</div>
+                                            <div class="m-pipe-stage">
+                                                <div class="m-pipe-node fig">fig_PV2Dem<br>_Cost.png</div>
+                                                <div class="m-pipe-node fig" style="margin-top:4px;">fig_QU<br>_box.png</div>
+                                                <div class="m-pipe-node group" style="margin-top:4px;">7 figures</div>
+                                                <div style="font-size:10px;color:var(--d-muted);margin-top:4px;">figures</div>
+                                            </div>
+                                        </div>
+                                        <div class="callout" style="left:50%;top:-2px;transform:translateX(-50%);">2</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 12: CLEANUP — DELETE REPOSITORY
+                 ============================================================ -->
+            <section class="slide" aria-label="Cleanup - Delete repository">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Teardown</span>Cleanup &mdash; delete the repository</h2>
+                    <div class="sep reveal"></div>
+                    <div class="two-col">
+                        <div class="col-info reveal">
+                            <p class="slide-desc">To wipe the demo state, open the <strong>Working in a Repository</strong> tab and use the repository management controls.</p>
+                            <ul class="callout-list" style="margin-top:14px;">
+                                <li><span class="num">1</span><span>Type the <strong>repository name</strong> to confirm. This prevents accidental deletion.</span></li>
+                                <li><span class="num">2</span><span>Click <strong>Delete repository</strong>. This is <strong style="color:var(--pres-pink);">irreversible</strong> &mdash; it removes all files, metadata, and version history.</span></li>
+                            </ul>
+                            <div class="info-card" style="margin-top:18px;">
+                                <h4 style="font-size:19px;">What gets deleted</h4>
+                                <p style="font-size:17px;">All LakeFS branches and commits. All physical files in MinIO. All RDF metadata in Fuseki. Everything.</p>
+                            </div>
+                        </div>
+                        <div class="col-mock reveal">
+                            <div class="mock mock-rel" style="min-height:0;">
+                                <div class="mock-browser">
+                                    <div class="mock-dot r"></div><div class="mock-dot y"></div><div class="mock-dot g"></div>
+                                    <div class="mock-url">fen-esdh.ch</div>
+                                </div>
+                                <div class="mock-header">
+                                    <div class="mock-logo"><span class="bolt">&#9889;</span> Energy Systems Data Hub</div>
+                                    <div class="mock-user">Logged in as <b>Yaman</b> &middot; yaman</div>
+                                </div>
+                                <div class="mock-tabs">
+                                    <div class="mock-tab">Discovering &amp; Searching</div>
+                                    <div class="mock-tab active">Working in a Repository</div>
+                                    <div class="mock-tab">Lineage</div>
+                                </div>
+                                <div class="mock-body" style="position:relative;">
+                                    <div class="mock-dialog-overlay">
+                                        <div class="mock-dialog">
+                                            <div class="mock-dialog-head" style="color:var(--d-err);">&#9888;&#65039; Delete repository</div>
+                                            <div class="mock-dialog-body">
+                                                <div class="m-danger-banner">
+                                                    You are about to <strong>permanently delete</strong> the repository <strong>groupe-e-planning-process</strong> and all its contents. This action cannot be undone.
+                                                </div>
+                                                <div class="m-group" style="margin-top:8px;position:relative;">
+                                                    <div class="m-label">Type the repository name to confirm</div>
+                                                    <input class="m-input code" value="groupe-e-planning-process" readonly style="border-color:var(--d-err);">
+                                                    <div class="callout" style="right:-16px;top:4px;">1</div>
+                                                </div>
+                                            </div>
+                                            <div class="mock-dialog-foot" style="position:relative;">
+                                                <div class="m-btn">Cancel</div>
+                                                <div class="m-btn m-btn-danger">Delete repository</div>
+                                                <div class="callout" style="right:-14px;top:2px;">2</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 13: PROV-O REFERENCE
+                 ============================================================ -->
+            <section class="slide" aria-label="PROV-O field reference">
+                <div class="slide-inner">
+                    <h2 class="reveal"><span class="tag">Reference</span>PROV-O lineage fields in the upload dialog</h2>
+                    <div class="sep reveal"></div>
+                    <p class="slide-desc reveal" style="margin-bottom:18px;">These two fields in the upload dialog are what make lineage work. Without them, the hub stores files but cannot answer "where did this come from?".</p>
+                    <div class="two-col" style="gap:40px;">
+                        <div class="col reveal">
+                            <div class="info-card" style="border-left:3px solid var(--pres-accent);">
+                                <h4 style="color:var(--pres-accent);">Derived from</h4>
+                                <p style="font-size:17px;margin-bottom:10px;">The multiselect field in the <strong>Provenance</strong> section of the upload dialog.</p>
+                                <table style="font-family:var(--font-display);font-size:17px;color:var(--pres-muted);">
+                                    <tr><td style="width:120px;border:none;padding:4px 8px;"><strong style="color:var(--pres-text);">Meaning</strong></td><td style="border:none;padding:4px 8px;">This dataset was produced from these parent datasets (<code>prov:wasDerivedFrom</code>)</td></tr>
+                                    <tr><td style="border:none;padding:4px 8px;"><strong style="color:var(--pres-text);">Used in</strong></td><td style="border:none;padding:4px 8px;">Phases 2, 3, 4, 5 &mdash; any output that has inputs</td></tr>
+                                    <tr><td style="border:none;padding:4px 8px;"><strong style="color:var(--pres-text);">Skip when</strong></td><td style="border:none;padding:4px 8px;">Phase 1 (raw) or hand-curated files with no parent</td></tr>
+                                </table>
+                            </div>
+                            <div class="info-card" style="border-left:3px solid var(--pres-amber);margin-top:18px;">
+                                <h4 style="color:var(--pres-amber);">Run ID</h4>
+                                <p style="font-size:17px;margin-bottom:10px;">The text input below "Derived from" in the upload dialog.</p>
+                                <table style="font-family:var(--font-display);font-size:17px;color:var(--pres-muted);">
+                                    <tr><td style="width:120px;border:none;padding:4px 8px;"><strong style="color:var(--pres-text);">Meaning</strong></td><td style="border:none;padding:4px 8px;">Groups uploads under one PROV-O Activity &mdash; "all outputs from the same processing step"</td></tr>
+                                    <tr><td style="border:none;padding:4px 8px;"><strong style="color:var(--pres-text);">Used in</strong></td><td style="border:none;padding:4px 8px;">Every phase with a processing step (cleaning, regionalization, grid planning, publication)</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col reveal">
+                            <div style="font-family:var(--font-display);font-size:20px;color:var(--pres-text);font-weight:600;margin-bottom:10px;">Run IDs used in this example</div>
+                            <table style="width:100%;border-collapse:collapse;font-family:var(--font-display);font-size:18px;">
+                                <tr><th style="text-align:left;padding:8px;border-bottom:2px solid var(--pres-border);color:var(--pres-accent);font-size:14px;text-transform:uppercase;">Phase</th><th style="text-align:left;padding:8px;border-bottom:2px solid var(--pres-border);color:var(--pres-accent);font-size:14px;text-transform:uppercase;">Run ID</th><th style="text-align:left;padding:8px;border-bottom:2px solid var(--pres-border);color:var(--pres-accent);font-size:14px;text-transform:uppercase;"># Parents</th></tr>
+                                <tr><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-muted);">Phase 1 &mdash; Raw</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-dim);font-family:var(--font-code);font-size:15px;">&mdash;</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-dim);">0 (root)</td></tr>
+                                <tr><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-muted);">Phase 2 &mdash; Clean</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);font-family:var(--font-code);font-size:15px;">clean_2024-04-30</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);">1 each</td></tr>
+                                <tr><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-muted);">Phase 3 &mdash; Pckl</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);font-family:var(--font-code);font-size:15px;">regionalize_2024-04-30</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);">3</td></tr>
+                                <tr><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-muted);">Phase 4 &mdash; Grid</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);font-family:var(--font-code);font-size:15px;">grid_planning_2024-04-30</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);">all pckls</td></tr>
+                                <tr><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-muted);">Phase 5 &mdash; Figures</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);font-family:var(--font-code);font-size:15px;">publication_2024-04-30</td><td style="padding:8px;border-bottom:1px solid var(--pres-border);color:var(--pres-text);">2</td></tr>
+                            </table>
+                            <p class="note" style="margin-top:14px;">The four <span class="hl">Run ID</span> values are the most semantically meaningful: they group datasets produced by the <em>same activity</em>.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SLIDE 14: CLOSING
+                 ============================================================ -->
+            <section class="slide" aria-label="Closing">
+                <div class="slide-inner" style="justify-content:center; align-items:center; text-align:center;">
+                    <h2 class="reveal" style="font-size:52px; max-width:1300px; line-height:1.3;">What the team gains</h2>
+                    <div class="sep reveal" style="margin:16px auto;"></div>
+                    <div class="card-row reveal" style="max-width:1500px;">
+                        <div class="card" style="border-top:3px solid var(--pres-accent); text-align:left;">
+                            <h4 style="color:var(--pres-accent); font-size:26px;">1. A single source of truth</h4>
+                            <p style="font-size:20px;">Every file related to a planning cycle lives in one repository, one branch, one URL.</p>
+                        </div>
+                        <div class="card" style="border-top:3px solid var(--pres-amber); text-align:left;">
+                            <h4 style="color:var(--pres-amber); font-size:26px;">2. A reproducible chain of custody</h4>
+                            <p style="font-size:20px;">A figure uploaded today is queryable all the way back to its raw input, even months later and even by someone who was not there.</p>
+                        </div>
+                        <div class="card" style="border-top:3px solid var(--pres-pink); text-align:left;">
+                            <h4 style="color:var(--pres-pink); font-size:26px;">3. A repeatable bootstrap</h4>
+                            <p style="font-size:20px;">When the next planning cycle starts (e.g. <code>2025-04-30</code>), repeat the same steps with updated files and run IDs. The new cycle lives alongside the old one.</p>
+                        </div>
+                    </div>
+                    <p class="reveal" style="margin-top:36px; font-family:var(--font-display); font-size:22px; color:var(--pres-dim); max-width:1100px;">
+                        That is the <em>provisioning</em>: not the computation of the grid plan, but the act of putting every artifact of the plan into a governed, queryable, lineage-aware home.
+                    </p>
+                    <p class="reveal" style="margin-top:28px; font-family:var(--font-code); font-size:16px; color:var(--pres-dim);">
+                        Energy Systems Data Hub &middot; PROV-O Lineage &middot; Dashboard UI
+                    </p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- === PROGRESS BAR === -->
+    <div class="progress-bar" id="progressBar"></div>
+    <!-- === SLIDE COUNTER === -->
+    <div class="slide-counter" id="slideCounter"></div>
+
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.stage = document.getElementById('deckStage');
+                this.progressBar = document.getElementById('progressBar');
+                this.slideCounter = document.getElementById('slideCounter');
+                this.isAnimating = false;
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.showSlide(0);
+            }
+            setupStageScale() {
+                const scale = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                scale();
+                window.addEventListener('resize', scale);
+            }
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+                    switch (e.key) {
+                        case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+                            e.preventDefault(); this.next(); break;
+                        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+                            e.preventDefault(); this.prev(); break;
+                        case 'Home': e.preventDefault(); this.showSlide(0); break;
+                        case 'End': e.preventDefault(); this.showSlide(this.slides.length - 1); break;
+                    }
+                });
+            }
+            setupTouchNav() {
+                let startX = 0, startY = 0;
+                this.stage.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+                }, { passive: true });
+                this.stage.addEventListener('touchend', (e) => {
+                    const dx = e.changedTouches[0].clientX - startX;
+                    const dy = e.changedTouches[0].clientY - startY;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                        dx < 0 ? this.next() : this.prev();
+                    }
+                }, { passive: true });
+            }
+            setupWheelNav() {
+                let lastWheel = 0;
+                document.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const now = Date.now();
+                    if (now - lastWheel < 600) return;
+                    lastWheel = now;
+                    e.deltaY > 0 ? this.next() : this.prev();
+                }, { passive: false });
+            }
+            showSlide(index) {
+                if (this.isAnimating) return;
+                const target = Math.max(0, Math.min(index, this.slides.length - 1));
+                if (target === this.currentSlide && this.slides[target].classList.contains('visible')) return;
+                this.isAnimating = true;
+                this.slides.forEach((s) => s.classList.remove('active', 'visible'));
+                this.currentSlide = target;
+                const slide = this.slides[target];
+                slide.classList.add('active');
+                requestAnimationFrame(() => {
+                    slide.classList.add('visible');
+                    this.isAnimating = false;
+                });
+                const pct = ((target + 1) / this.slides.length) * 100;
+                this.progressBar.style.width = pct + '%';
+                this.slideCounter.textContent = `${target + 1} / ${this.slides.length}`;
+            }
+            next() { this.showSlide(this.currentSlide + 1); }
+            prev() { this.showSlide(this.currentSlide - 1); }
+        }
+        new SlidePresentation();
+    </script>
+</body>
+</html>
